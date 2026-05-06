@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <changeSet id="20260506-003-create-table" author="system">
+        <createTable tableName="categories">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="color" type="VARCHAR(7)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="icon" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_by" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <rollback>
+            <dropTable tableName="categories"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260506-003-add-fk" author="system">
+        <addForeignKeyConstraint
+                baseTableName="categories"
+                baseColumnNames="user_id"
+                constraintName="fk_categories_user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="categories" constraintName="fk_categories_user_id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260506-003-add-index-user-id" author="system">
+        <createIndex indexName="idx_categories_user_id" tableName="categories">
+            <column name="user_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex indexName="idx_categories_user_id" tableName="categories"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260506-003-add-unique-index-user-name" author="system">
+        <sql>
+            CREATE UNIQUE INDEX idx_categories_user_name_lower ON categories (user_id, LOWER(name));
+        </sql>
+
+        <rollback>
+            <sql>DROP INDEX IF EXISTS idx_categories_user_name_lower;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

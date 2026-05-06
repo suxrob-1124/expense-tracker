@@ -1,0 +1,7 @@
+.gradle/
+build/
+out/
+bin/
+!gradle/wrapper/gradle-wrapper.jar
+HELP.md
+*.log

@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/expense_tracker
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.format_sql: true
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+
+app:
+  jwt:
+    # Generate: openssl rand -base64 64
+    secret: REPLACE_WITH_BASE64_ENCODED_JWT_SECRET
+  crypto:
+    # Generate: openssl rand -base64 32
+    aes-key: REPLACE_WITH_BASE64_ENCODED_32_BYTE_AES_KEY
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    liquibase: INFO
