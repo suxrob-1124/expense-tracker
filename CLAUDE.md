@@ -34,6 +34,8 @@ npm run lint && npm run typecheck
 
 > **Tip**: Add `export JAVA_HOME="/opt/homebrew/opt/openjdk@21"` to `~/.zshrc` to avoid setting it each time.
 
+> **`smoke-test.sh`**: Bash script that hits every implemented endpoint end-to-end (register → login → CRUD for categories and transactions). Requires a running backend. Check count grows with each implemented module — see `scripts/smoke-test.sh` for the current list.
+
 ## 🚀 Getting Started (New Developer)
 
 1. Copy environment template and fill in secrets:
@@ -53,7 +55,7 @@ npm run lint && npm run typecheck
    ```bash
    openssl rand -base64 64
    ```
-6. Start Postgres: `docker compose up -d`
+6. Start Postgres: `docker compose up -d postgres`
 7. Run backend: `cd backend && ./gradlew bootRun --args='--spring.profiles.active=local'`
 8. Run frontend: `cd frontend && npm run dev`
 
@@ -61,9 +63,9 @@ npm run lint && npm run typecheck
 
 | Variable | Description |
 |---|---|
-| `FIELD_ENCRYPTION_KEY` | Base64-encoded 32-byte AES key. App refuses to start if missing or wrong length. |
-| `JWT_SECRET` | HS256 secret for JWT signing. |
-| `DB_PASSWORD` | Postgres password. Set in `application-local.yml` for local dev; required env var for Docker/prod. |
+| `APP_CRYPTO_AES_KEY` | Base64-encoded 32-byte AES key. App refuses to start if missing or wrong length. |
+| `APP_JWT_SECRET` | HS256 secret for JWT signing. |
+| `SPRING_DATASOURCE_PASSWORD` | Postgres password. Set in `application-local.yml` for local dev; required env var for Docker/prod. |
 
 > See `backend/.env.example` for a full template with comments.
 
@@ -169,62 +171,58 @@ middleware.ts           # Route protection
 - Liquibase manages schema — **never `ddl-auto: create/update`**.
 - Add changesets to `backend/src/main/resources/db/changelog/changes/`.
 - Naming: `YYYYMMDD-NNN-description.xml`.
-- Existing changesets: `20260506-001-create-users-table.xml`.
+- Existing changesets: `20260506-001-create-users-table.xml`, `20260506-002-create-audit-events-table.xml`, `20260506-003-create-categories-table.xml`, `20260507-004-create-transactions-table.xml`.
 
 ## 📋 Implementation Status
 
-| Шаг | Статус | Что реализовано |
+| Step | Status | What's implemented |
 |---|---|---|
-| Шаг 1 — БД и Домен | ✅ Готов | `users` table (Liquibase), `User` entity, `BaseEntity`, `Role`, `UserRepository`, `AesGcmStringConverter`, `AesKeyHolder`, `EmailHasher`, `SpringSecurityAuditorAware` |
-| Шаг 2 — Security Infrastructure | ✅ Готов | `SecurityConfig`, `CorsConfig`, `RateLimitConfig`, `JwtTokenProvider`, `JwtAuthenticationFilter`, `RateLimitFilter`, `UserPrincipal`, `CustomUserDetailsService`, `GlobalExceptionHandler`, `ApiAuthenticationEntryPoint`, `ApiAccessDeniedHandler` |
-| Шаг 3 — User модуль (CQRS) | ✅ Готов | `UserRegisteredEvent`, `PasswordChangedEvent`, `RegisterRequest`, `UserResponse`, `ChangePasswordRequest`, `UserMapper` (MapStruct), `UserCommandService`, `UserQueryService`, `UserController` |
-| Шаг 4 — Auth модуль + слушатели | ✅ Готов | `AuthService`, `AuthController`, `LoginRequest`, `AuthResponse`, `UserLoggedInEvent`, `UserLoginFailedEvent`, `AuthRegistrationListener`, `UserLoginActivityListener`, `AuthSessionListener`, `AuditEvent`, `AuditEventRepository`, Liquibase `002` changeset |
-| Шаг 5 — Category модуль | ✅ Готов | Liquibase `003` changeset (`categories` table + FK + индексы), `Category` entity, `CategoryRepository`, `CategoryRequest`, `CategoryResponse`, `CategoryMapper`, `CategoryQueryService`, `CategoryCommandService`, `CategoryController`, smoke-test (21/21 passed) |
-| Шаг 6 — Frontend Setup & Auth Pages (FSD) | ✅ Готов | FSD-структура (`shared/entities/features/widgets/views/app`), shadcn/ui вручную под Tailwind 4, RHF + zod v4, Server Actions с HttpOnly cookie-проксированием, страницы `/login` и `/register`, middleware-защита `/dashboard`, RFC 7807 → Toast (sonner). `npm run build` — OK, 5 маршрутов. |
-| Шаг 7 — Transaction модуль | ✅ Готов | Liquibase changeset `20260507-004` (таблица `transactions`, FK, 4 индекса), `Transaction` entity + `TransactionType` enum, `TransactionRepository`, DTOs (Records), `TransactionMapper` (MapStruct), `TransactionQueryService` + `TransactionCommandService` (CQRS, cross-module ownership check через `CategoryRepository`), `TransactionController` (`PATCH` = full-update). Frontend: `entities/transaction` (Amount), `features/transaction-form` (RHF + Zod v4, Server Actions), `views/transactions` (Server Component + MonthSwitcher), маршрут `/transactions` защищён middleware. `./gradlew build -x test` — OK, `npm run build` — OK, 6 маршрутов. Smoke-test расширен до 31 проверки. |
+| Step 1 — DB & Domain | ✅ Done | `users` table (Liquibase), `User` entity, `BaseEntity`, `Role`, `UserRepository`, `AesGcmStringConverter`, `AesKeyHolder`, `EmailHasher`, `SpringSecurityAuditorAware` |
+| Step 2 — Security Infrastructure | ✅ Done | `SecurityConfig`, `CorsConfig`, `RateLimitConfig`, `JwtTokenProvider`, `JwtAuthenticationFilter`, `RateLimitFilter`, `UserPrincipal`, `CustomUserDetailsService`, `GlobalExceptionHandler`, `ApiAuthenticationEntryPoint`, `ApiAccessDeniedHandler` |
+| Step 3 — User module (CQRS) | ✅ Done | `UserRegisteredEvent`, `PasswordChangedEvent`, `RegisterRequest`, `UserResponse`, `ChangePasswordRequest`, `UserMapper` (MapStruct), `UserCommandService`, `UserQueryService`, `UserController` |
+| Step 4 — Auth module + listeners | ✅ Done | `AuthService`, `AuthController`, `LoginRequest`, `AuthResponse`, `UserLoggedInEvent`, `UserLoginFailedEvent`, `AuthRegistrationListener`, `UserLoginActivityListener`, `AuthSessionListener`, `AuditEvent`, `AuditEventRepository`, Liquibase `002` changeset |
+| Step 5 — Category module | ✅ Done | Liquibase `003` changeset (`categories` table + FK + indexes), `Category` entity, `CategoryRepository`, `CategoryRequest`, `CategoryResponse`, `CategoryMapper`, `CategoryQueryService`, `CategoryCommandService`, `CategoryController`, smoke-test 21/21 passed |
+| Step 6 — Frontend Setup & Auth Pages (FSD) | ✅ Done | FSD structure (`shared/entities/features/widgets/views/app`), shadcn/ui manually under Tailwind 4, RHF + zod v4, Server Actions with HttpOnly cookie proxying, `/login` and `/register` pages, middleware protection for `/dashboard`, RFC 7807 → Toast (sonner). `npm run build` — OK, 5 routes. |
+| Step 7 — Transaction module | ✅ Done | Liquibase changeset `20260507-004` (`transactions` table, FK, 4 indexes), `Transaction` entity + `TransactionType` enum, `TransactionRepository`, DTOs (Records), `TransactionMapper` (MapStruct), `TransactionQueryService` + `TransactionCommandService` (CQRS, cross-module ownership check via `CategoryRepository`), `TransactionController` (`PATCH` = partial update). Frontend: `entities/transaction` (Amount), `features/transaction-form` (RHF + Zod v4, Server Actions), `views/transactions` (Server Component + MonthSwitcher), `/transactions` route protected by middleware. `./gradlew build -x test` — OK, `npm run build` — OK, 6 routes. Smoke-test extended to 31 checks. |
+| Step 8 — Dashboard | ✅ Done | Backend: `PagedResponse<T>` (dto/common), `findAllByUserIdOrderByDateDesc(Pageable)` in `TransactionRepository`, `TransactionQueryService.findLatest`, `GET /api/v1/transactions/latest`. Frontend (FSD): `shared/lib/formatDate`, `shared/ui/Skeleton`, `shared/api/dto.PagedResponse<T>`, `entities/user/UserGreeting`, `entities/transaction/TransactionRow`, `features/transactions-pagination/PaginationControls` (Zod client-validation), `widgets/sidebar-nav/SidebarNav` (aside A11y), `widgets/recent-transactions-list/RecentTransactionsList`, `views/dashboard/DashboardView`, `/dashboard` route fully implemented. `npm run build` — OK, 6 routes (ƒ /dashboard). Smoke-test extended to 35 checks. |
+| Step 9 — UI Redesign + Categories + Profile | ✅ Done | Dropped `/dashboard`; `/` → redirect `/transactions`. Route group `app/(authenticated)/` with shared layout fetching `/users/me` and rendering `SidebarNav` (lucide icons + user card + logout). New routes: `/categories` (grid of CategoryCard + CategoryCreateForm with icon Select + color picker), `/profile` (read-only user data + logout). `widgets/transactions-kpi` (3 KPI cards: Доходы/Расходы/Баланс). `entities/category` (icons map, CategoryCard with window.confirm delete). `features/category-form` (Server Actions create/delete + RHF+zod form). `features/auth/logout` extracted. Deleted: dashboard view/route, recent-transactions-list widget, transactions-pagination feature, UserGreeting entity. `npm run build` — OK, 7 routes (ƒ /transactions, /categories, /profile). Backend smoke-test: 35/35 unchanged. |
 
 ## 🌿 Branch Strategy (GitHub Flow)
 
 ### Rules
-- `main` — всегда deployable. Прямые коммиты запрещены.
-- Любая работа ведётся в отдельной ветке, создаваемой от `main`.
-- Ветка живёт ровно столько, сколько нужно для фичи/фикса. После мержа — удалить.
-- Каждый PR мержится через **squash merge** для линейной истории `main`.
+- `main` — always deployable. Direct commits forbidden.
+- All work happens in a branch cut from `main`.
+- Branch lives only as long as needed for the feature/fix. Delete after merge.
+- Every PR merges via **squash merge** for a linear `main` history.
 
 ### Naming Convention
 
-| Тип | Шаблон | Пример |
+| Type | Pattern | Example |
 |---|---|---|
-| Новая фича | `feat/<slug>` | `feat/dashboard-main-screen` |
-| Исправление бага | `fix/<slug>` | `fix/refresh-token-reuse` |
-| Рефакторинг | `refactor/<slug>` | `refactor/transaction-mapper` |
-| Документация | `docs/<slug>` | `docs/api-endpoints` |
+| New feature | `feat/<slug>` | `feat/dashboard-main-screen` |
+| Bug fix | `fix/<slug>` | `fix/refresh-token-reuse` |
+| Refactoring | `refactor/<slug>` | `refactor/transaction-mapper` |
+| Documentation | `docs/<slug>` | `docs/api-endpoints` |
 | Chore / CI | `chore/<slug>` | `chore/upgrade-spring-boot` |
 
 ### Workflow
-```
-# 1. Начать работу
+```bash
+# 1. Start work
 git checkout main && git pull origin main
 git checkout -b feat/<slug>
 
-# 2. Работать, коммитить по Conventional Commits
+# 2. Work, commit using Conventional Commits
 git commit -m "feat(dashboard): ..."
 
-# 3. Перед PR — синхронизировать с main
+# 3. Before PR — sync with main
 git fetch origin
 git rebase origin/main
 
-# 4. Открыть PR → ревью → squash merge → удалить ветку
+# 4. Open PR → review → squash merge → delete branch
 ```
 
----
-
-## Commit Convention
+## 💬 Commit Convention
 Use Conventional Commits:
-- Type: feat, fix, docs, refactor, test, ci
-- Scope: module or scope of changes
-- Brief description in Russian
-- Mark breaking changes with an exclamation point
 
 ### Format
 ```
@@ -271,8 +269,6 @@ chore(frontend): install @radix-ui/react-select
 
 test(transactions): extend smoke-test to 32 checks including partial PATCH
 ```
-
----
 
 ## 🤖 AI Assistance Rules
 - **Conciseness**: Code first, brief explanation after.

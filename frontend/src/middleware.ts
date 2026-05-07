@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const PROTECTED = ['/dashboard', '/transactions']
+const PROTECTED = ['/transactions', '/categories', '/profile']
 const AUTH_ROUTES = ['/login', '/register']
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  // accessToken cookie path is '/dashboard', so it is only sent by the browser
-  // on requests to /dashboard and its sub-paths — which is exactly where we need it.
   const accessToken = request.cookies.get('accessToken')?.value
 
   const isProtected = PROTECTED.some((p) => pathname === p || pathname.startsWith(p + '/'))
@@ -17,7 +15,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (isAuthRoute && accessToken) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return NextResponse.redirect(new URL('/transactions', request.url))
   }
 
   return NextResponse.next()

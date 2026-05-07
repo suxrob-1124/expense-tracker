@@ -375,6 +375,52 @@ else
   fail "GET /transactions/{id} after delete → skipped"
 fi
 
+# ── Dashboard: GET /transactions/latest ───────────────────────────────────────
+
+# Re-create a transaction for latest endpoint tests
+TX_CAT_FULL2=$(curl -si -X POST "$BASE_URL/api/v1/categories" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"name":"LatestTestCat","color":"#ABCDEF","icon":"🔖"}')
+TX_CAT_LOCATION2=$(echo "$TX_CAT_FULL2" | grep -i "^location:" | tr -d '\r' | awk '{print $2}')
+TX_CATEGORY_ID2=$(echo "$TX_CAT_LOCATION2" | grep -oE '[0-9a-f-]{36}$')
+
+for i in $(seq 1 3); do
+  curl -s -X POST "$BASE_URL/api/v1/transactions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -d "{\"amount\":$(( i * 10 )).00,\"type\":\"INCOME\",\"date\":\"2026-05-07T10:0${i}:00Z\",\"categoryId\":\"$TX_CATEGORY_ID2\"}" > /dev/null
+done
+
+info "32. GET /transactions/latest (default) → 200 with content array"
+LATEST_BODY=$(http_body GET "/api/v1/transactions/latest" \
+  -H "Authorization: Bearer $ACCESS_TOKEN")
+LATEST_CODE=$(http_code GET "/api/v1/transactions/latest" \
+  -H "Authorization: Bearer $ACCESS_TOKEN")
+[ "$LATEST_CODE" = "200" ] && pass "GET /transactions/latest → 200 OK" \
+                            || fail "GET /transactions/latest → $LATEST_CODE (expected 200)"
+echo "$LATEST_BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); assert 'content' in d and isinstance(d['content'], list)" 2>/dev/null \
+  && pass "GET /transactions/latest → response has content array" \
+  || fail "GET /transactions/latest → content array missing or malformed"
+
+info "33. GET /transactions/latest?size=2 → exactly 2 items"
+LATEST_2=$(http_body GET "/api/v1/transactions/latest?size=2" \
+  -H "Authorization: Bearer $ACCESS_TOKEN")
+echo "$LATEST_2" | python3 -c "import sys,json; d=json.load(sys.stdin); assert len(d['content']) <= 2, f'Expected <=2, got {len(d[\"content\"])}'" 2>/dev/null \
+  && pass "GET /transactions/latest?size=2 → content.length <= 2" \
+  || fail "GET /transactions/latest?size=2 → unexpected content length"
+
+info "34. GET /transactions/latest without token → 401"
+LATEST_NO_AUTH=$(http_code GET "/api/v1/transactions/latest")
+[ "$LATEST_NO_AUTH" = "401" ] && pass "GET /transactions/latest (no token) → 401 Unauthorized" \
+                               || fail "GET /transactions/latest (no token) → $LATEST_NO_AUTH (expected 401)"
+
+info "35. GET /transactions/latest?page=-1 → 400"
+LATEST_BAD_PAGE=$(http_code GET "/api/v1/transactions/latest?page=-1" \
+  -H "Authorization: Bearer $ACCESS_TOKEN")
+[ "$LATEST_BAD_PAGE" = "400" ] && pass "GET /transactions/latest?page=-1 → 400 Bad Request" \
+                                || fail "GET /transactions/latest?page=-1 → $LATEST_BAD_PAGE (expected 400)"
+
 # ── summary ──────────────────────────────────────────────────────────────────
 echo ""
 echo "======================================"

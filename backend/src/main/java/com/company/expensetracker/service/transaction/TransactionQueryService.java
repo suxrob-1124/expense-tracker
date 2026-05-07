@@ -1,7 +1,9 @@
 package com.company.expensetracker.service.transaction;
 
+import com.company.expensetracker.dto.common.PagedResponse;
 import com.company.expensetracker.dto.transaction.TransactionResponse;
 import com.company.expensetracker.repository.TransactionRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -40,6 +42,20 @@ public class TransactionQueryService {
                 .stream()
                 .map(transactionMapper::toResponse)
                 .toList();
+    }
+
+    public PagedResponse<TransactionResponse> findLatest(UUID userId, int page, int size) {
+        if (page < 0) {
+            throw new IllegalArgumentException("Page index must not be less than zero");
+        }
+        if (size < 1 || size > 50) {
+            throw new IllegalArgumentException("Page size must be between 1 and 50");
+        }
+        return PagedResponse.from(
+                transactionRepository
+                        .findAllByUserIdOrderByDateDesc(userId, PageRequest.of(page, size))
+                        .map(transactionMapper::toResponse)
+        );
     }
 
     public TransactionResponse findByIdForUser(UUID id, UUID userId) {

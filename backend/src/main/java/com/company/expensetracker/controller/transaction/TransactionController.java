@@ -1,5 +1,6 @@
 package com.company.expensetracker.controller.transaction;
 
+import com.company.expensetracker.dto.common.PagedResponse;
 import com.company.expensetracker.dto.transaction.TransactionPatchRequest;
 import com.company.expensetracker.dto.transaction.TransactionRequest;
 import com.company.expensetracker.dto.transaction.TransactionResponse;
@@ -36,6 +37,14 @@ public class TransactionController {
         return ResponseEntity
                 .created(uriBuilder.path("/api/v1/transactions/{id}").buildAndExpand(response.id()).toUri())
                 .body(response);
+    }
+
+    @GetMapping("/latest")
+    public ResponseEntity<PagedResponse<TransactionResponse>> getLatest(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(transactionQueryService.findLatest(principal.userId(), page, size));
     }
 
     @GetMapping

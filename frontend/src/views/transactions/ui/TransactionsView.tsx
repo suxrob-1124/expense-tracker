@@ -1,9 +1,13 @@
+import Link from 'next/link'
 import { backendFetch } from '@/shared/api/http'
 import { API } from '@/shared/api/endpoints'
 import type { TransactionResponse, CategoryResponse } from '@/shared/api/dto'
 import { Amount } from '@/entities/transaction'
+import { formatDate, formatMonthYear } from '@/shared/lib/formatDate'
+import { TransactionsKpi } from '@/widgets/transactions-kpi'
 import { MonthSwitcher } from './MonthSwitcher'
 import { NewTransactionButton } from './NewTransactionButton'
+import { Card, CardContent } from '@/shared/ui/card'
 
 interface TransactionsViewProps {
   month: number
@@ -26,52 +30,62 @@ export async function TransactionsView({ month, year }: TransactionsViewProps) {
     .filter((t) => t.type === 'EXPENSE')
     .reduce((s, t) => s + parseFloat(t.amount), 0)
 
+  const noCategories = categories.length === 0
+
   return (
-    <main className="mx-auto max-w-2xl space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Транзакции</h1>
-        <NewTransactionButton categories={categories} />
-      </div>
-
-      <div className="flex items-center justify-between rounded-lg border p-4">
-        <MonthSwitcher month={month} year={year} />
-        <div className="flex gap-6 text-sm">
-          <span className="text-green-600">
-            +{new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(income)}
-          </span>
-          <span className="text-red-600">
-            −{new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(expense)}
-          </span>
+    <div className="space-y-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Транзакции</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{formatMonthYear(month, year)}</p>
         </div>
+        <NewTransactionButton categories={categories} disabled={noCategories} />
       </div>
 
-      {transactions.length === 0 ? (
-        <p className="text-center text-muted-foreground py-12">
-          Транзакций за этот месяц нет
-        </p>
+      <TransactionsKpi income={income} expense={expense} />
+
+      <div className="flex items-center">
+        <MonthSwitcher month={month} year={year} />
+      </div>
+
+      {noCategories ? (
+        <Card>
+          <CardContent className="py-12 text-center space-y-2">
+            <p className="text-muted-foreground">Сначала создайте категорию</p>
+            <Link href="/categories" className="text-sm underline underline-offset-4">
+              Перейти к категориям
+            </Link>
+          </CardContent>
+        </Card>
+      ) : transactions.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">Транзакций за этот месяц нет</p>
+          </CardContent>
+        </Card>
       ) : (
-        <ul className="divide-y rounded-lg border">
-          {transactions.map((tx) => {
-            const category = categories.find((c) => c.id === tx.categoryId)
-            return (
-              <li key={tx.id} className="flex items-center justify-between px-4 py-3">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-medium">
-                    {category?.name ?? 'Без категории'}
-                  </span>
-                  {tx.description && (
-                    <span className="text-xs text-muted-foreground">{tx.description}</span>
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(tx.date).toLocaleDateString('ru-RU')}
-                  </span>
-                </div>
-                <Amount value={tx.amount} type={tx.type} />
-              </li>
-            )
-          })}
-        </ul>
+        <Card>
+          <ul className="divide-y">
+            {transactions.map((tx) => {
+              const category = categories.find((c) => c.id === tx.categoryId)
+              return (
+                <li key={tx.id} className="flex items-center justify-between px-4 py-3">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-sm font-medium">
+                      {category?.name ?? 'Без категории'}
+                    </span>
+                    {tx.description && (
+                      <span className="text-xs text-muted-foreground">{tx.description}</span>
+                    )}
+                    <span className="text-xs text-muted-foreground">{formatDate(tx.date)}</span>
+                  </div>
+                  <Amount value={tx.amount} type={tx.type} />
+                </li>
+              )
+            })}
+          </ul>
+        </Card>
       )}
-    </main>
+    </div>
   )
 }

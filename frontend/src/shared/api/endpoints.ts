@@ -20,5 +20,7 @@ export const API = {
       month != null && year != null
         ? `/api/v1/transactions?month=${month}&year=${year}`
         : '/api/v1/transactions',
+    latest: (page = 0, size = 10) =>
+      `/api/v1/transactions/latest?page=${page}&size=${size}`,
   },
 } as const

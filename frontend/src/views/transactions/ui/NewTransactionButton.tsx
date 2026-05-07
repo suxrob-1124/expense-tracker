@@ -8,14 +8,15 @@ import type { CategoryResponse } from '@/shared/api/dto'
 
 interface NewTransactionButtonProps {
   categories: CategoryResponse[]
+  disabled?: boolean
 }
 
-export function NewTransactionButton({ categories }: NewTransactionButtonProps) {
+export function NewTransactionButton({ categories, disabled }: NewTransactionButtonProps) {
   const [open, setOpen] = useState(false)
 
   if (!open) {
     return (
-      <Button onClick={() => setOpen(true)}>
+      <Button onClick={() => setOpen(true)} disabled={disabled}>
         + Новая транзакция
       </Button>
     )

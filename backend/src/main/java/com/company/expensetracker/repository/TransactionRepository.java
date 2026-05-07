@@ -1,6 +1,8 @@
 package com.company.expensetracker.repository;
 
 import com.company.expensetracker.domain.Transaction;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.Instant;
@@ -11,6 +13,8 @@ import java.util.UUID;
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
 
     List<Transaction> findAllByUserIdAndDateBetweenOrderByDateDesc(UUID userId, Instant from, Instant to);
+
+    Page<Transaction> findAllByUserIdOrderByDateDesc(UUID userId, Pageable pageable);
 
     Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
 
