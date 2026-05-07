@@ -39,5 +39,18 @@ services:
       retries: 8
       start_period: 60s
 
+  frontend:
+    build: ./frontend
+    container_name: expense-tracker-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+      BACKEND_INTERNAL_URL: http://backend:8080
+    depends_on:
+      backend:
+        condition: service_healthy
+
 volumes:
   postgres_data:

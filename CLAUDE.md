@@ -129,30 +129,39 @@ Root package: `com.company.expensetracker`
 - **CORS**: Whitelist origins only. `*` wildcard is forbidden.
 - **Audit log**: Every `UserRegistered`, `UserLoggedIn`, `UserLoginFailed` event writes an `AuditEvent` record.
 
-## 🎨 Frontend Architecture (Next.js 15 / React 19)
+## 🎨 Frontend Architecture (Next.js 15 / React 19 / FSD)
 
 ### Coding Standards
 - **Router**: App Router **only** — no `pages/` directory.
+- **Architecture**: Feature-Sliced Design (FSD). Layer import order (top→bottom only): `app → views → widgets → features → entities → shared`.
 - **Path alias**: `@/*` → `src/*`
-- **Tailwind**: v4 — configured via `@import "tailwindcss"` in `globals.css`. No `tailwind.config.ts`.
+- **Tailwind**: v4 — configured via `@import "tailwindcss"` + `@theme {}` in `globals.css`. No `tailwind.config.ts`.
 - **Type safety**: No `any`. Use `unknown` + type guards.
+- **Forms**: `react-hook-form` + `zod` (v4 — use `.issues` not `.errors`). Resolver: `@hookform/resolvers/zod`.
+- **UI Kit**: shadcn/ui installed manually in `shared/ui/` (no CLI). Imports use `@/shared/lib/cn`.
+- **Notifications**: `sonner` (`toast.error`, `toast.success`). `<Toaster />` in root `layout.tsx`.
 
 ### Layer Rules
 - **Data fetching**: Server Components fetch directly. No `useEffect` for data fetching.
-- **Mutations**: Server Actions only. No dedicated API route handlers for mutations.
+- **Mutations**: Server Actions only (`'use server'`). No dedicated API route handlers for mutations.
 - **Components**: Default to Server Components. Use `"use client"` only when required (interactivity, browser APIs).
-- **Auth**: HttpOnly cookies for Refresh Token. JWT validated and refreshed in Next.js Middleware (`middleware.ts`).
+- **Auth**: `accessToken` and `refreshToken` in HttpOnly cookies. Route protection in `middleware.ts`.
+- **Server Actions → backend**: use `backendFetch` from `shared/api/http.ts` (server-only). Never call backend directly from browser.
 
-### File / Folder Conventions
+### FSD Structure
 ```
 src/
-  app/                  # App Router — layouts, pages, loading, error
-  components/
-    ui/                 # Primitive, reusable (Button, Input, …)
-    features/           # Feature-scoped composites (LoginForm, ExpenseTable, …)
-  lib/                  # Pure utilities, API clients, helpers
-  actions/              # Server Actions (one file per domain)
-  types/                # Shared TypeScript types / interfaces
+  app/                  # Next.js App Router — layouts, routes
+  views/                # Page-level compositions (NOTE: named "views" to avoid clash with Next.js "pages/" router)
+  widgets/              # Complex reusable blocks (currently empty)
+  features/             # User-facing features (login-form, register-form, …)
+  entities/             # Domain entities (user, …)
+  shared/
+    api/                # dto.ts, endpoints.ts, problem.ts, http.ts (server-only)
+    config/             # env.ts
+    lib/                # cn.ts
+    ui/                 # shadcn primitives: button, input, label, card, form, sonner
+middleware.ts           # Route protection
 ```
 
 ## 🗄 Database
@@ -171,6 +180,7 @@ src/
 | Шаг 3 — User модуль (CQRS) | ✅ Готов | `UserRegisteredEvent`, `PasswordChangedEvent`, `RegisterRequest`, `UserResponse`, `ChangePasswordRequest`, `UserMapper` (MapStruct), `UserCommandService`, `UserQueryService`, `UserController` |
 | Шаг 4 — Auth модуль + слушатели | ✅ Готов | `AuthService`, `AuthController`, `LoginRequest`, `AuthResponse`, `UserLoggedInEvent`, `UserLoginFailedEvent`, `AuthRegistrationListener`, `UserLoginActivityListener`, `AuthSessionListener`, `AuditEvent`, `AuditEventRepository`, Liquibase `002` changeset |
 | Шаг 5 — Category модуль | ✅ Готов | Liquibase `003` changeset (`categories` table + FK + индексы), `Category` entity, `CategoryRepository`, `CategoryRequest`, `CategoryResponse`, `CategoryMapper`, `CategoryQueryService`, `CategoryCommandService`, `CategoryController`, smoke-test (21/21 passed) |
+| Шаг 6 — Frontend Setup & Auth Pages (FSD) | ✅ Готов | FSD-структура (`shared/entities/features/widgets/views/app`), shadcn/ui вручную под Tailwind 4, RHF + zod v4, Server Actions с HttpOnly cookie-проксированием, страницы `/login` и `/register`, middleware-защита `/dashboard`, RFC 7807 → Toast (sonner). `npm run build` — OK, 5 маршрутов. |
 
 ## 🤖 AI Assistance Rules
 - **Conciseness**: Code first, brief explanation after.
