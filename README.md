@@ -26,8 +26,8 @@ cp backend/src/main/resources/application-local.yml.example \
 Сгенерируй секреты и вставь в оба файла:
 
 ```bash
-openssl rand -base64 32   # → APP_CRYPTO_AES_KEY (и app.crypto.aes-key)
-openssl rand -base64 64   # → APP_JWT_SECRET (и app.jwt.secret)
+openssl rand -base64 32   # → FIELD_ENCRYPTION_KEY (и app.crypto.aes-key)
+openssl rand -base64 64   # → JWT_SECRET (и app.jwt.secret)
 ```
 
 ### 2. Запуск (локально)

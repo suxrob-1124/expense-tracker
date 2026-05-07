@@ -61,9 +61,9 @@ npm run lint && npm run typecheck
 
 | Variable | Description |
 |---|---|
-| `APP_CRYPTO_AES_KEY` | Base64-encoded 32-byte AES key. App refuses to start if missing or wrong length. |
-| `APP_JWT_SECRET` | HS256 secret for JWT signing. |
-| `SPRING_DATASOURCE_PASSWORD` | Postgres password (default: `postgres` for local). |
+| `FIELD_ENCRYPTION_KEY` | Base64-encoded 32-byte AES key. App refuses to start if missing or wrong length. |
+| `JWT_SECRET` | HS256 secret for JWT signing. |
+| `DB_PASSWORD` | Postgres password. Set in `application-local.yml` for local dev; required env var for Docker/prod. |
 
 > See `backend/.env.example` for a full template with comments.
 
