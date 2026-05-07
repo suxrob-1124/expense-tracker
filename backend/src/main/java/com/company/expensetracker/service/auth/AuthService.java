@@ -87,6 +87,9 @@ public class AuthService {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token type");
             }
             String jti = claims.getId();
+            // Known limitation: two concurrent requests with the same token can both pass
+            // this check before either writes to the blacklist. Acceptable for MVP;
+            // full fix requires INSERT ... ON CONFLICT DO NOTHING at the DB level.
             if (tokenBlacklistService.isRevoked(jti)) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token has been revoked");
             }
@@ -95,7 +98,7 @@ public class AuthService {
             List<String> roles = jwtTokenProvider.extractRoles(claims);
             String role = roles.isEmpty() ? "ROLE_USER" : roles.get(0);
 
-            // Revoke the old token before issuing a new one (rotation)
+            // Revoke old JTI before issuing new token (rotation)
             Date expiration = claims.getExpiration();
             tokenBlacklistService.revoke(jti, expiration.toInstant());
 

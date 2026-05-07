@@ -18,15 +18,8 @@ public class RateLimitConfig {
     @Value("${app.ratelimit.auth-rpm:10}")
     private int authRpm;
 
-    private final Cache<String, Bucket> defaultBuckets = Caffeine.newBuilder()
-            .expireAfterAccess(Duration.ofMinutes(15))
-            .maximumSize(100_000)
-            .build();
-
-    private final Cache<String, Bucket> authBuckets = Caffeine.newBuilder()
-            .expireAfterAccess(Duration.ofMinutes(15))
-            .maximumSize(100_000)
-            .build();
+    private final Cache<String, Bucket> defaultBuckets = buildBucketCache();
+    private final Cache<String, Bucket> authBuckets = buildBucketCache();
 
     public Bucket resolveDefaultBucket(String ip) {
         return defaultBuckets.get(ip, k -> newBucket(defaultRpm));
@@ -34,6 +27,13 @@ public class RateLimitConfig {
 
     public Bucket resolveAuthBucket(String ip) {
         return authBuckets.get(ip, k -> newBucket(authRpm));
+    }
+
+    private static Cache<String, Bucket> buildBucketCache() {
+        return Caffeine.newBuilder()
+                .expireAfterAccess(Duration.ofMinutes(15))
+                .maximumSize(100_000)
+                .build();
     }
 
     private Bucket newBucket(int rpm) {

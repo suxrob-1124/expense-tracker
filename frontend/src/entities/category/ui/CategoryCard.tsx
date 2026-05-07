@@ -1,12 +1,13 @@
 'use client'
 
+import { toast } from 'sonner'
 import { ICON_MAP } from '../model/icons'
 import type { CategoryResponse } from '../model/types'
 import { Trash2 } from 'lucide-react'
 
 interface CategoryCardProps {
   category: CategoryResponse
-  onDelete: (id: string) => Promise<void>
+  onDelete: (id: string) => Promise<{ error?: string }>
 }
 
 export function CategoryCard({ category, onDelete }: CategoryCardProps) {
@@ -14,7 +15,8 @@ export function CategoryCard({ category, onDelete }: CategoryCardProps) {
 
   async function handleDelete() {
     if (!window.confirm(`Удалить категорию «${category.name}»?`)) return
-    await onDelete(category.id)
+    const result = await onDelete(category.id)
+    if (result.error) toast.error(result.error)
   }
 
   return (
