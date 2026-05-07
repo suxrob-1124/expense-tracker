@@ -53,6 +53,7 @@ dependencies {
 
     // Rate limiting
     implementation("com.bucket4j:bucket4j-core:$bucket4jVersion")
+    implementation("com.github.ben-manes.caffeine:caffeine")
 
     // API Docs
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocVersion")

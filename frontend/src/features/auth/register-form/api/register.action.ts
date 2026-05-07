@@ -7,7 +7,7 @@ import { API } from '@/shared/api/endpoints'
 import type { AuthResponse, RegisterRequest } from '@/shared/api/dto'
 import type { RegisterFormValues } from '../model/schema'
 import { registerSchema } from '../model/schema'
-import { setAuthCookies } from '@/features/auth/login-form/api/login.action'
+import { setAuthCookies } from '@/features/auth/login-form'
 
 export type RegisterActionResult = { ok: false; message: string } | { ok: true }
 
@@ -46,5 +46,5 @@ export async function registerAction(raw: RegisterFormValues): Promise<RegisterA
     await setAuthCookies(loginRes, data)
   }
 
-  redirect('/dashboard')
+  redirect('/transactions')
 }

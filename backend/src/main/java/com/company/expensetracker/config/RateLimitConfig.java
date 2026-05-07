@@ -1,13 +1,13 @@
 package com.company.expensetracker.config;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 @Configuration
 public class RateLimitConfig {
@@ -18,15 +18,22 @@ public class RateLimitConfig {
     @Value("${app.ratelimit.auth-rpm:10}")
     private int authRpm;
 
-    private final ConcurrentMap<String, Bucket> defaultBuckets = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, Bucket> authBuckets = new ConcurrentHashMap<>();
+    private final Cache<String, Bucket> defaultBuckets = Caffeine.newBuilder()
+            .expireAfterAccess(Duration.ofMinutes(15))
+            .maximumSize(100_000)
+            .build();
+
+    private final Cache<String, Bucket> authBuckets = Caffeine.newBuilder()
+            .expireAfterAccess(Duration.ofMinutes(15))
+            .maximumSize(100_000)
+            .build();
 
     public Bucket resolveDefaultBucket(String ip) {
-        return defaultBuckets.computeIfAbsent(ip, k -> newBucket(defaultRpm));
+        return defaultBuckets.get(ip, k -> newBucket(defaultRpm));
     }
 
     public Bucket resolveAuthBucket(String ip) {
-        return authBuckets.computeIfAbsent(ip, k -> newBucket(authRpm));
+        return authBuckets.get(ip, k -> newBucket(authRpm));
     }
 
     private Bucket newBucket(int rpm) {

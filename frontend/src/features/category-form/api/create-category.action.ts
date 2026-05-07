@@ -3,12 +3,17 @@
 import { revalidatePath } from 'next/cache'
 import { backendFetch } from '@/shared/api/http'
 import { API } from '@/shared/api/endpoints'
-import type { CategoryFormData } from '../model/schema'
+import { categorySchema, type CategoryFormData } from '../model/schema'
 
 export async function createCategoryAction(data: CategoryFormData): Promise<{ error?: string }> {
+  const parsed = categorySchema.safeParse(data)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Ошибка валидации' }
+  }
+
   const res = await backendFetch(API.categories.base, {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify(parsed.data),
     headers: { 'Content-Type': 'application/json' },
     forwardAccessToken: true,
   })

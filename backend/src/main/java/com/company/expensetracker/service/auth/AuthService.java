@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,15 +33,18 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final EmailHasher emailHasher;
     private final ApplicationEventPublisher eventPublisher;
+    private final TokenBlacklistService tokenBlacklistService;
 
     public AuthService(AuthenticationManager authenticationManager,
                        JwtTokenProvider jwtTokenProvider,
                        EmailHasher emailHasher,
-                       ApplicationEventPublisher eventPublisher) {
+                       ApplicationEventPublisher eventPublisher,
+                       TokenBlacklistService tokenBlacklistService) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
         this.emailHasher = emailHasher;
         this.eventPublisher = eventPublisher;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     public LoginTokens login(LoginRequest request, HttpServletRequest httpRequest) {
@@ -82,9 +86,18 @@ public class AuthService {
             if (!"refresh".equals(claims.get("type", String.class))) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token type");
             }
+            String jti = claims.getId();
+            if (tokenBlacklistService.isRevoked(jti)) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token has been revoked");
+            }
+
             UUID userId = jwtTokenProvider.extractUserId(claims);
             List<String> roles = jwtTokenProvider.extractRoles(claims);
             String role = roles.isEmpty() ? "ROLE_USER" : roles.get(0);
+
+            // Revoke the old token before issuing a new one (rotation)
+            Date expiration = claims.getExpiration();
+            tokenBlacklistService.revoke(jti, expiration.toInstant());
 
             UserPrincipal principal = new UserPrincipal(userId, null, null, role, true, null);
             String newAccessToken = jwtTokenProvider.generateAccessToken(principal);
@@ -99,6 +112,19 @@ public class AuthService {
             );
         } catch (JwtException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token");
+        }
+    }
+
+    public void revokeRefreshToken(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) return;
+        try {
+            Jws<Claims> jws = jwtTokenProvider.parseAndValidate(refreshToken);
+            Claims claims = jws.getPayload();
+            if ("refresh".equals(claims.get("type", String.class))) {
+                tokenBlacklistService.revoke(claims.getId(), claims.getExpiration().toInstant());
+            }
+        } catch (JwtException ignored) {
+            // Expired or invalid token — nothing to revoke
         }
     }
 

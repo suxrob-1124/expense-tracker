@@ -36,7 +36,7 @@ export async function loginAction(raw: LoginRequest): Promise<LoginActionResult>
   const data: AuthResponse = await res.json()
   await setAuthCookies(res, data)
 
-  redirect('/dashboard')
+  redirect('/transactions')
 }
 
 export async function setAuthCookies(res: Response, data: AuthResponse) {

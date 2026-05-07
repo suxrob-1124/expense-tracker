@@ -2,7 +2,7 @@ import { backendFetch } from '@/shared/api/http'
 import { API } from '@/shared/api/endpoints'
 import type { CategoryResponse } from '@/shared/api/dto'
 import { CategoryCard } from '@/entities/category'
-import { CategoryCreateForm } from '@/features/category-form'
+import { CategoryCreateForm, deleteCategoryAction } from '@/features/category-form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 
 export async function CategoriesView() {
@@ -23,7 +23,7 @@ export async function CategoriesView() {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {categories.map((cat) => (
-            <CategoryCard key={cat.id} category={cat} />
+            <CategoryCard key={cat.id} category={cat} onDelete={deleteCategoryAction} />
           ))}
         </div>
       )}

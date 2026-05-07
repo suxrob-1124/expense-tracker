@@ -2,19 +2,19 @@
 
 import { ICON_MAP } from '../model/icons'
 import type { CategoryResponse } from '../model/types'
-import { deleteCategoryAction } from '@/features/category-form'
 import { Trash2 } from 'lucide-react'
 
 interface CategoryCardProps {
   category: CategoryResponse
+  onDelete: (id: string) => Promise<void>
 }
 
-export function CategoryCard({ category }: CategoryCardProps) {
+export function CategoryCard({ category, onDelete }: CategoryCardProps) {
   const Icon = ICON_MAP[category.icon]
 
   async function handleDelete() {
     if (!window.confirm(`Удалить категорию «${category.name}»?`)) return
-    await deleteCategoryAction(category.id)
+    await onDelete(category.id)
   }
 
   return (

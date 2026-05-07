@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <changeSet id="20260507-005-1" author="system">
+        <createTable tableName="revoked_token_jtis">
+            <column name="jti" type="VARCHAR(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <rollback>
+            <dropTable tableName="revoked_token_jtis"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260507-005-2" author="system">
+        <createIndex tableName="revoked_token_jtis" indexName="idx_revoked_token_jtis_expires_at">
+            <column name="expires_at"/>
+        </createIndex>
+        <rollback>
+            <dropIndex tableName="revoked_token_jtis" indexName="idx_revoked_token_jtis_expires_at"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -50,7 +50,9 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletResponse httpResponse) {
+    public ResponseEntity<Void> logout(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+        String refreshToken = extractRefreshCookie(httpRequest);
+        authService.revokeRefreshToken(refreshToken);
         clearRefreshCookie(httpResponse);
         return ResponseEntity.noContent().build();
     }
