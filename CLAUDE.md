@@ -183,9 +183,12 @@ middleware.ts           # Route protection
 | Шаг 6 — Frontend Setup & Auth Pages (FSD) | ✅ Готов | FSD-структура (`shared/entities/features/widgets/views/app`), shadcn/ui вручную под Tailwind 4, RHF + zod v4, Server Actions с HttpOnly cookie-проксированием, страницы `/login` и `/register`, middleware-защита `/dashboard`, RFC 7807 → Toast (sonner). `npm run build` — OK, 5 маршрутов. |
 | Шаг 7 — Transaction модуль | ✅ Готов | Liquibase changeset `20260507-004` (таблица `transactions`, FK, 4 индекса), `Transaction` entity + `TransactionType` enum, `TransactionRepository`, DTOs (Records), `TransactionMapper` (MapStruct), `TransactionQueryService` + `TransactionCommandService` (CQRS, cross-module ownership check через `CategoryRepository`), `TransactionController` (`PATCH` = full-update). Frontend: `entities/transaction` (Amount), `features/transaction-form` (RHF + Zod v4, Server Actions), `views/transactions` (Server Component + MonthSwitcher), маршрут `/transactions` защищён middleware. `./gradlew build -x test` — OK, `npm run build` — OK, 6 маршрутов. Smoke-test расширен до 31 проверки. |
 
-## 📝 Commit Conventions
-
-All commits must follow **Conventional Commits** (`conventionalcommits.org`).
+## Commit Convention
+Use Conventional Commits:
+- Type: feat, fix, docs, refactor, test, ci
+- Scope: module or scope of changes
+- Brief description in Russian
+- Mark breaking changes with an exclamation point
 
 ### Format
 ```
