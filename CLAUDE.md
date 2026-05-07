@@ -183,6 +183,42 @@ middleware.ts           # Route protection
 | Шаг 6 — Frontend Setup & Auth Pages (FSD) | ✅ Готов | FSD-структура (`shared/entities/features/widgets/views/app`), shadcn/ui вручную под Tailwind 4, RHF + zod v4, Server Actions с HttpOnly cookie-проксированием, страницы `/login` и `/register`, middleware-защита `/dashboard`, RFC 7807 → Toast (sonner). `npm run build` — OK, 5 маршрутов. |
 | Шаг 7 — Transaction модуль | ✅ Готов | Liquibase changeset `20260507-004` (таблица `transactions`, FK, 4 индекса), `Transaction` entity + `TransactionType` enum, `TransactionRepository`, DTOs (Records), `TransactionMapper` (MapStruct), `TransactionQueryService` + `TransactionCommandService` (CQRS, cross-module ownership check через `CategoryRepository`), `TransactionController` (`PATCH` = full-update). Frontend: `entities/transaction` (Amount), `features/transaction-form` (RHF + Zod v4, Server Actions), `views/transactions` (Server Component + MonthSwitcher), маршрут `/transactions` защищён middleware. `./gradlew build -x test` — OK, `npm run build` — OK, 6 маршрутов. Smoke-test расширен до 31 проверки. |
 
+## 🌿 Branch Strategy (GitHub Flow)
+
+### Rules
+- `main` — всегда deployable. Прямые коммиты запрещены.
+- Любая работа ведётся в отдельной ветке, создаваемой от `main`.
+- Ветка живёт ровно столько, сколько нужно для фичи/фикса. После мержа — удалить.
+- Каждый PR мержится через **squash merge** для линейной истории `main`.
+
+### Naming Convention
+
+| Тип | Шаблон | Пример |
+|---|---|---|
+| Новая фича | `feat/<slug>` | `feat/dashboard-main-screen` |
+| Исправление бага | `fix/<slug>` | `fix/refresh-token-reuse` |
+| Рефакторинг | `refactor/<slug>` | `refactor/transaction-mapper` |
+| Документация | `docs/<slug>` | `docs/api-endpoints` |
+| Chore / CI | `chore/<slug>` | `chore/upgrade-spring-boot` |
+
+### Workflow
+```
+# 1. Начать работу
+git checkout main && git pull origin main
+git checkout -b feat/<slug>
+
+# 2. Работать, коммитить по Conventional Commits
+git commit -m "feat(dashboard): ..."
+
+# 3. Перед PR — синхронизировать с main
+git fetch origin
+git rebase origin/main
+
+# 4. Открыть PR → ревью → squash merge → удалить ветку
+```
+
+---
+
 ## Commit Convention
 Use Conventional Commits:
 - Type: feat, fix, docs, refactor, test, ci
