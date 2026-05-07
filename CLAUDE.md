@@ -218,8 +218,38 @@ git commit -m "feat(dashboard): ..."
 git fetch origin
 git rebase origin/main
 
-# 4. Open PR → review → squash merge → delete branch
+# 4. Push and open PR
+git push -u origin feat/<slug>
+gh pr create --base main --head feat/<slug> --title "<type>(<scope>): <subject>" --body "$(cat <<'EOF'
+## Summary
+- bullet points what changed and why
+
+## Endpoints added / changed (if applicable)
+| Method | Path | Description |
+|--------|------|-------------|
+| POST   | /api/v1/... | ... |
+
+## Test plan
+- [ ] smoke-test passes: `./scripts/smoke-test.sh`
+- [ ] backend compiles: `./gradlew build -x test`
+- [ ] frontend builds: `cd frontend && npm run build`
+- [ ] manual: describe golden path steps
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+EOF
+)"
+
+# 5. After squash merge — clean up
+git checkout main && git pull origin main
+git branch -d feat/<slug>
 ```
+
+### PR Checklist (before opening)
+- [ ] `./gradlew build -x test` — green
+- [ ] `cd frontend && npm run build && npm run lint && npm run typecheck` — green
+- [ ] `./scripts/smoke-test.sh` — all checks pass
+- [ ] Liquibase changesets have `<rollback>` blocks
+- [ ] No direct commits to `main`
 
 ## 💬 Commit Convention
 Use Conventional Commits:
