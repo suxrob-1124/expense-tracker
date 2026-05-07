@@ -24,10 +24,10 @@ public class TokenBlacklistService {
 
     @Transactional(readOnly = true)
     public boolean isRevoked(String jti) {
-        return repository.existsByJti(jti);
+        return repository.existsById(jti);
     }
 
-    @Scheduled(fixedDelay = 3_600_000)
+    @Scheduled(fixedDelayString = "${app.jwt.blacklist-cleanup-delay:3600000}")
     @Transactional
     public void purgeExpired() {
         repository.deleteByExpiresAtBefore(Instant.now());

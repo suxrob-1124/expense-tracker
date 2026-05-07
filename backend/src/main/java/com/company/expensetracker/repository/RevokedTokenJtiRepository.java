@@ -9,8 +9,6 @@ import java.time.Instant;
 
 public interface RevokedTokenJtiRepository extends JpaRepository<RevokedTokenJti, String> {
 
-    boolean existsByJti(String jti);
-
     @Modifying
     @Query("DELETE FROM RevokedTokenJti r WHERE r.expiresAt < :now")
     void deleteByExpiresAtBefore(Instant now);

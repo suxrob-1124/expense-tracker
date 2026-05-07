@@ -15,7 +15,7 @@ public class RevokedTokenJti {
     @Column(name = "jti", length = 36, nullable = false, updatable = false)
     private String jti;
 
-    @Column(name = "expires_at", nullable = false)
+    @Column(name = "expires_at", nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private Instant expiresAt;
 
     protected RevokedTokenJti() {}
