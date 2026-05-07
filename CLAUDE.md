@@ -181,6 +181,59 @@ middleware.ts           # Route protection
 | Шаг 4 — Auth модуль + слушатели | ✅ Готов | `AuthService`, `AuthController`, `LoginRequest`, `AuthResponse`, `UserLoggedInEvent`, `UserLoginFailedEvent`, `AuthRegistrationListener`, `UserLoginActivityListener`, `AuthSessionListener`, `AuditEvent`, `AuditEventRepository`, Liquibase `002` changeset |
 | Шаг 5 — Category модуль | ✅ Готов | Liquibase `003` changeset (`categories` table + FK + индексы), `Category` entity, `CategoryRepository`, `CategoryRequest`, `CategoryResponse`, `CategoryMapper`, `CategoryQueryService`, `CategoryCommandService`, `CategoryController`, smoke-test (21/21 passed) |
 | Шаг 6 — Frontend Setup & Auth Pages (FSD) | ✅ Готов | FSD-структура (`shared/entities/features/widgets/views/app`), shadcn/ui вручную под Tailwind 4, RHF + zod v4, Server Actions с HttpOnly cookie-проксированием, страницы `/login` и `/register`, middleware-защита `/dashboard`, RFC 7807 → Toast (sonner). `npm run build` — OK, 5 маршрутов. |
+| Шаг 7 — Transaction модуль | ✅ Готов | Liquibase changeset `20260507-004` (таблица `transactions`, FK, 4 индекса), `Transaction` entity + `TransactionType` enum, `TransactionRepository`, DTOs (Records), `TransactionMapper` (MapStruct), `TransactionQueryService` + `TransactionCommandService` (CQRS, cross-module ownership check через `CategoryRepository`), `TransactionController` (`PATCH` = full-update). Frontend: `entities/transaction` (Amount), `features/transaction-form` (RHF + Zod v4, Server Actions), `views/transactions` (Server Component + MonthSwitcher), маршрут `/transactions` защищён middleware. `./gradlew build -x test` — OK, `npm run build` — OK, 6 маршрутов. Smoke-test расширен до 31 проверки. |
+
+## 📝 Commit Conventions
+
+All commits must follow **Conventional Commits** (`conventionalcommits.org`).
+
+### Format
+```
+<type>(<scope>): <subject>
+
+[optional body — wrap at 100 chars]
+
+[optional footer — BREAKING CHANGE, Closes #issue]
+```
+
+### Rules
+- **Subject line**: ≤ 72 characters, imperative mood, no period at the end.
+- **Body**: explain *why*, not *what*. Wrap at 100 characters.
+- **Breaking change**: add `!` after type/scope (`feat!:`) **and** a `BREAKING CHANGE:` footer.
+
+### Types
+
+| Type | When to use |
+|---|---|
+| `feat` | New feature or endpoint |
+| `fix` | Bug fix |
+| `refactor` | Code change that neither fixes a bug nor adds a feature |
+| `perf` | Performance improvement |
+| `test` | Adding or updating tests / smoke-test |
+| `docs` | Documentation only (`CLAUDE.md`, `README.md`) |
+| `chore` | Dependencies, build scripts, CI config |
+| `style` | Formatting, whitespace — no logic change |
+
+### Scopes (optional, in parentheses)
+
+Use the module or layer name: `auth`, `user`, `category`, `transactions`, `frontend`, `db`, `security`.
+
+### Examples
+```
+feat(transactions): add PATCH partial-update with MapStruct IGNORE strategy
+
+fix(auth): prevent refresh token reuse after logout
+
+refactor(transactions): replace native <select> with Radix UI Select component
+
+docs: update CLAUDE.md with commit conventions
+
+chore(frontend): install @radix-ui/react-select
+
+test(transactions): extend smoke-test to 32 checks including partial PATCH
+```
+
+---
 
 ## 🤖 AI Assistance Rules
 - **Conciseness**: Code first, brief explanation after.

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <changeSet id="20260507-004-create-table" author="system">
+        <createTable tableName="transactions">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="amount" type="DECIMAL(19,4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+            <column name="date" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_by" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <rollback>
+            <dropTable tableName="transactions"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260507-004-add-fk-user" author="system">
+        <addForeignKeyConstraint
+                baseTableName="transactions"
+                baseColumnNames="user_id"
+                constraintName="fk_transactions_user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="transactions" constraintName="fk_transactions_user_id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260507-004-add-fk-category" author="system">
+        <addForeignKeyConstraint
+                baseTableName="transactions"
+                baseColumnNames="category_id"
+                constraintName="fk_transactions_category_id"
+                referencedTableName="categories"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="transactions" constraintName="fk_transactions_category_id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260507-004-add-index-user-id" author="system">
+        <createIndex indexName="idx_transactions_user_id" tableName="transactions">
+            <column name="user_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex indexName="idx_transactions_user_id" tableName="transactions"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260507-004-add-index-category-id" author="system">
+        <createIndex indexName="idx_transactions_category_id" tableName="transactions">
+            <column name="category_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex indexName="idx_transactions_category_id" tableName="transactions"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260507-004-add-index-date" author="system">
+        <createIndex indexName="idx_transactions_date" tableName="transactions">
+            <column name="date"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex indexName="idx_transactions_date" tableName="transactions"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260507-004-add-index-user-date" author="system">
+        <createIndex indexName="idx_transactions_user_date" tableName="transactions">
+            <column name="user_id"/>
+            <column name="date" descending="true"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex indexName="idx_transactions_user_date" tableName="transactions"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

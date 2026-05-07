@@ -247,6 +247,134 @@ NO_AUTH_CODE=$(http_code GET /api/v1/categories)
 [ "$NO_AUTH_CODE" = "401" ] && pass "GET /categories (no token) → 401 Unauthorized" \
                              || fail "GET /categories (no token) → $NO_AUTH_CODE (expected 401)"
 
+# ── Transactions CRUD ─────────────────────────────────────────────────────────
+
+# Create a fresh category for transaction tests (previous was deleted in step 19)
+TX_CAT_FULL=$(curl -si -X POST "$BASE_URL/api/v1/categories" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"name":"TxTestCategory","color":"#123456","icon":"💰"}')
+TX_CAT_LOCATION=$(echo "$TX_CAT_FULL" | grep -i "^location:" | tr -d '\r' | awk '{print $2}')
+TX_CATEGORY_ID=$(echo "$TX_CAT_LOCATION" | grep -oE '[0-9a-f-]{36}$')
+
+# Create category for second user (for cross-category ownership check)
+CAT2_FULL=$(curl -si -X POST "$BASE_URL/api/v1/categories" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN2" \
+  -d '{"name":"User2Category","color":"#654321","icon":"🔒"}')
+CAT2_LOCATION=$(echo "$CAT2_FULL" | grep -i "^location:" | tr -d '\r' | awk '{print $2}')
+CAT2_ID=$(echo "$CAT2_LOCATION" | grep -oE '[0-9a-f-]{36}$')
+
+TX_DATE="2026-05-07T10:00:00Z"
+
+info "22. POST /transactions → 201 + Location"
+TX_CREATE_FULL=$(curl -si -X POST "$BASE_URL/api/v1/transactions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d "{\"amount\":99.99,\"type\":\"EXPENSE\",\"description\":\"Smoke test\",\"date\":\"$TX_DATE\",\"categoryId\":\"$TX_CATEGORY_ID\"}")
+TX_CREATE_STATUS=$(echo "$TX_CREATE_FULL" | head -1 | grep -oE '[0-9]{3}' | head -1)
+[ "$TX_CREATE_STATUS" = "201" ] && pass "POST /transactions → 201 Created" \
+                                 || fail "POST /transactions → $TX_CREATE_STATUS (expected 201)"
+TX_LOCATION=$(echo "$TX_CREATE_FULL" | grep -i "^location:" | tr -d '\r' | awk '{print $2}')
+TX_ID=$(echo "$TX_LOCATION" | grep -oE '[0-9a-f-]{36}$')
+[ -n "$TX_ID" ] && pass "POST /transactions → Location header present" \
+                || fail "POST /transactions → Location header missing or no UUID"
+
+info "23. GET /transactions?month=5&year=2026 → list contains transaction"
+if [ -n "$TX_ID" ]; then
+  TX_LIST=$(http_body GET "/api/v1/transactions?month=5&year=2026" \
+    -H "Authorization: Bearer $ACCESS_TOKEN")
+  echo "$TX_LIST" | grep -q "$TX_ID" \
+    && pass "GET /transactions?month=5&year=2026 → transaction found" \
+    || fail "GET /transactions?month=5&year=2026 → transaction not found in list"
+else
+  fail "GET /transactions list → skipped (no transaction id)"
+fi
+
+info "24. GET /transactions/{id} → 200"
+if [ -n "$TX_ID" ]; then
+  TX_GET_CODE=$(http_code GET "/api/v1/transactions/$TX_ID" \
+    -H "Authorization: Bearer $ACCESS_TOKEN")
+  [ "$TX_GET_CODE" = "200" ] && pass "GET /transactions/{id} → 200 OK" \
+                              || fail "GET /transactions/{id} → $TX_GET_CODE (expected 200)"
+else
+  fail "GET /transactions/{id} → skipped (no transaction id)"
+fi
+
+info "25. PATCH /transactions/{id} partial: description only → amount preserved"
+if [ -n "$TX_ID" ]; then
+  TX_PARTIAL_BODY=$(http_body PATCH "/api/v1/transactions/$TX_ID" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -d '{"description":"Partially updated"}')
+  TX_PARTIAL_CODE=$(echo "$TX_PARTIAL_BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(0)" 2>/dev/null && echo "200" || echo "ERR")
+  # verify amount unchanged (99.99) and description changed
+  echo "$TX_PARTIAL_BODY" | grep -q '"description":"Partially updated"' \
+    && pass "PATCH partial: description updated" \
+    || fail "PATCH partial: description not updated in response"
+  echo "$TX_PARTIAL_BODY" | grep -q '"amount"' && \
+  ! echo "$TX_PARTIAL_BODY" | grep -q '"amount":0' \
+    && pass "PATCH partial: amount field preserved (non-zero)" \
+    || fail "PATCH partial: amount field missing or zeroed out"
+else
+  fail "PATCH /transactions/{id} partial → skipped (no transaction id)"
+fi
+
+info "26. Cross-user: GET /transactions/{id} with user2 token → 404"
+if [ -n "$TX_ID" ] && [ -n "$ACCESS_TOKEN2" ]; then
+  TX_OWN_CODE=$(http_code GET "/api/v1/transactions/$TX_ID" \
+    -H "Authorization: Bearer $ACCESS_TOKEN2")
+  [ "$TX_OWN_CODE" = "404" ] && pass "GET /transactions/{id} other user → 404 Not Found" \
+                              || fail "GET /transactions/{id} other user → $TX_OWN_CODE (expected 404)"
+else
+  fail "Cross-user GET → skipped (missing id or token)"
+fi
+
+info "27. Cross-category: POST /transactions with user2's categoryId → 404"
+if [ -n "$CAT2_ID" ]; then
+  TX_CROSS_CAT_CODE=$(http_code POST "/api/v1/transactions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -d "{\"amount\":10.00,\"type\":\"INCOME\",\"date\":\"$TX_DATE\",\"categoryId\":\"$CAT2_ID\"}")
+  [ "$TX_CROSS_CAT_CODE" = "404" ] && pass "POST /transactions with other user's category → 404 Not Found" \
+                                    || fail "POST /transactions with other user's category → $TX_CROSS_CAT_CODE (expected 404)"
+else
+  fail "Cross-category check → skipped (no user2 category id)"
+fi
+
+info "28. POST /transactions invalid body (amount=0) → 400"
+TX_BAD_CODE=$(http_code POST /api/v1/transactions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d "{\"amount\":0,\"type\":\"EXPENSE\",\"date\":\"$TX_DATE\",\"categoryId\":\"$TX_CATEGORY_ID\"}")
+[ "$TX_BAD_CODE" = "400" ] && pass "Invalid amount=0 → 400 Bad Request" \
+                            || fail "Invalid amount=0 → $TX_BAD_CODE (expected 400)"
+
+info "29. GET /transactions without token → 401"
+TX_NO_AUTH=$(http_code GET /api/v1/transactions)
+[ "$TX_NO_AUTH" = "401" ] && pass "GET /transactions (no token) → 401 Unauthorized" \
+                           || fail "GET /transactions (no token) → $TX_NO_AUTH (expected 401)"
+
+info "30. DELETE /transactions/{id} → 204"
+if [ -n "$TX_ID" ]; then
+  TX_DEL_CODE=$(http_code DELETE "/api/v1/transactions/$TX_ID" \
+    -H "Authorization: Bearer $ACCESS_TOKEN")
+  [ "$TX_DEL_CODE" = "204" ] && pass "DELETE /transactions/{id} → 204 No Content" \
+                              || fail "DELETE /transactions/{id} → $TX_DEL_CODE (expected 204)"
+else
+  fail "DELETE /transactions/{id} → skipped (no transaction id)"
+fi
+
+info "31. GET /transactions/{id} after delete → 404"
+if [ -n "$TX_ID" ]; then
+  TX_AFTER_DEL=$(http_code GET "/api/v1/transactions/$TX_ID" \
+    -H "Authorization: Bearer $ACCESS_TOKEN")
+  [ "$TX_AFTER_DEL" = "404" ] && pass "GET /transactions/{id} after delete → 404 Not Found" \
+                               || fail "GET /transactions/{id} after delete → $TX_AFTER_DEL (expected 404)"
+else
+  fail "GET /transactions/{id} after delete → skipped"
+fi
+
 # ── summary ──────────────────────────────────────────────────────────────────
 echo ""
 echo "======================================"

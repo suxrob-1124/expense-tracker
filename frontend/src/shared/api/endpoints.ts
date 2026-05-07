@@ -9,4 +9,16 @@ export const API = {
     me: '/api/v1/users/me',
     password: '/api/v1/users/me/password',
   },
+  categories: {
+    base: '/api/v1/categories',
+    byId: (id: string) => `/api/v1/categories/${id}`,
+  },
+  transactions: {
+    base: '/api/v1/transactions',
+    byId: (id: string) => `/api/v1/transactions/${id}`,
+    list: (month?: number, year?: number) =>
+      month != null && year != null
+        ? `/api/v1/transactions?month=${month}&year=${year}`
+        : '/api/v1/transactions',
+  },
 } as const

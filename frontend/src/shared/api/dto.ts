@@ -31,3 +31,31 @@ export interface AuthResponse {
   expiresInSeconds: number
   user: UserResponse
 }
+
+export interface CategoryResponse {
+  id: string
+  name: string
+  color: string
+  icon: string
+}
+
+export type TransactionType = 'INCOME' | 'EXPENSE'
+
+export interface TransactionRequest {
+  amount: string
+  type: TransactionType
+  description?: string | null
+  date: string         // ISO instant
+  categoryId: string   // UUID
+}
+
+export interface TransactionResponse {
+  id: string
+  amount: string
+  type: TransactionType
+  description: string | null
+  date: string
+  categoryId: string
+  createdAt: string
+  updatedAt: string
+}
