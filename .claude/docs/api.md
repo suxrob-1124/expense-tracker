@@ -174,72 +174,6 @@ Delete a category. Cascades to transactions (FK `ON DELETE CASCADE`).
 
 ---
 
-## Payment Methods — `/api/v1/payment-methods` *(bearer)*
-
-User-owned payment methods (cards, cash, bank accounts). Name must be unique per user (case-insensitive).
-
-### `POST /payment-methods`
-Create a payment method.
-
-| Codes | Body |
-|---|---|
-| `201 Created` | `PaymentMethodResponse` |
-| `400 Bad Request` | Validation failed (e.g. `last4` is not 4 digits) |
-| `409 Conflict` | Duplicate name for this user |
-
-**Request** — `PaymentMethodRequest`
-```json
-{
-  "name": "Visa Gold",
-  "type": "CARD",
-  "last4": "1234",
-  "balance": "1000.0000"
-}
-```
-- `type` — `CARD`, `CASH`, or `BANK`.
-- `last4` — optional, exactly 4 digits when provided.
-- `balance` — optional decimal string, scale 4, ≥ 0.
-
-### `GET /payment-methods`
-List all payment methods owned by the authenticated user, sorted by name.
-
-| Codes | Body |
-|---|---|
-| `200 OK` | `PaymentMethodResponse[]` |
-
-### `GET /payment-methods/{id}`
-Get a single payment method.
-
-| Codes | Body |
-|---|---|
-| `200 OK` | `PaymentMethodResponse` |
-| `404 Not Found` | Not found or owned by another user |
-
-### `PATCH /payment-methods/{id}`
-Partially update a payment method. Only non-null fields are applied. Use `archived: true|false` to toggle archive state — there is no dedicated archive endpoint.
-
-| Codes | Body |
-|---|---|
-| `200 OK` | `PaymentMethodResponse` |
-| `400 Bad Request` | Validation failed |
-| `404 Not Found` | — |
-| `409 Conflict` | Duplicate name |
-
-**Request** — `PaymentMethodPatchRequest`
-```json
-{ "archived": true }
-```
-
-### `DELETE /payment-methods/{id}`
-Delete a payment method. Transactions linked to this method are **not** deleted — the FK is `ON DELETE SET NULL`, so their `paymentMethodId` becomes `null`.
-
-| Codes | Body |
-|---|---|
-| `204 No Content` | — |
-| `404 Not Found` | — |
-
----
-
 ## Transactions — `/api/v1/transactions` *(bearer)*
 
 ### `POST /transactions`
@@ -249,7 +183,7 @@ Create a transaction.
 |---|---|
 | `201 Created` | `TransactionResponse` |
 | `400 Bad Request` | Validation failed |
-| `404 Not Found` | Referenced category or payment method does not exist or is owned by another user |
+| `404 Not Found` | Referenced category does not exist or is owned by another user |
 
 **Request** — `TransactionRequest`
 ```json
@@ -258,14 +192,12 @@ Create a transaction.
   "type": "EXPENSE",
   "description": "Lunch",
   "date": "2026-05-13T10:00:00Z",
-  "categoryId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-  "paymentMethodId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+  "categoryId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
 }
 ```
 - `amount` — decimal string, scale 4, > 0.
 - `type` — `INCOME` or `EXPENSE`.
 - `description` — optional, ≤ 255 chars.
-- `paymentMethodId` — optional UUID; ownership is verified, returns 404 if not owned.
 
 ### `GET /transactions/latest?page=&size=`
 List latest transactions with pagination, sorted by `date DESC`.
@@ -324,8 +256,6 @@ Partially update a transaction. Only non-null fields are applied.
 { "amount": "49.99", "description": "Lunch (corrected)" }
 ```
 
-> **Note**: `paymentMethodId: null` does **not** clear the link — null fields are ignored by the partial-update mapper. To unlink, delete the payment method itself; the FK (`ON DELETE SET NULL`) will null out the column.
-
 ### `DELETE /transactions/{id}`
 Delete a transaction.
 
@@ -359,20 +289,6 @@ Delete a transaction.
 }
 ```
 
-### `PaymentMethodResponse`
-```json
-{
-  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-  "name": "Visa Gold",
-  "type": "CARD",
-  "last4": "1234",
-  "balance": "1000.0000",
-  "archived": false,
-  "createdAt": "2026-05-13T10:00:00Z",
-  "updatedAt": "2026-05-13T10:00:00Z"
-}
-```
-
 ### `CategoryResponse`
 ```json
 {
@@ -392,7 +308,6 @@ Delete a transaction.
   "description": "Lunch",
   "date": "2026-05-13T10:00:00Z",
   "categoryId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-  "paymentMethodId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
   "createdAt": "2026-05-13T10:00:00Z",
   "updatedAt": "2026-05-13T10:00:00Z"
 }

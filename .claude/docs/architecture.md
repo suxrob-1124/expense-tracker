@@ -75,7 +75,6 @@ Cross-cutting:
 | **auth** | Authentication, JWT lifecycle, token revocation | `POST /auth/{login,refresh,logout}` |
 | **user** | Registration, profile, password change | `POST /users/register`, `GET /users/me`, `POST /users/me/password` |
 | **category** | User-owned expense/income categories (CRUD) | `/categories` |
-| **paymentmethod** | User-owned payment methods (CRUD + archive toggle) | `/payment-methods` |
 | **transaction** | Financial transactions (CRUD + month/summary queries) | `/transactions` |
 | **security** | JWT filter, rate limiter filter, UserDetails | Bean wiring only |
 | **crypto** | AES-256-GCM converter + email hasher | JPA `@Convert` integration |
@@ -153,7 +152,7 @@ Other slices import from `<slice>` (the barrel), never from `<slice>/ui/...`.
 | Group | Routes | Layout responsibility |
 |---|---|---|
 | `(auth)` | `/login`, `/register` | Public — no auth check |
-| `(authenticated)` | `/transactions`, `/categories`, `/payment-methods`, `/profile` | Layout calls `/users/me`; redirects if 401 |
+| `(authenticated)` | `/transactions`, `/categories`, `/profile` | Layout calls `/users/me`; redirects if 401 |
 
 ---
 
@@ -188,4 +187,4 @@ Other slices import from `<slice>` (the barrel), never from `<slice>/ui/...`.
 - **Liquibase, never `ddl-auto: update`** — schema changes are reviewed XML changesets with `<rollback>` blocks.
 - **Java Records for all DTOs** — immutable, concise, predictable serialization.
 - **No `any` in TypeScript, no raw `Object` in Java** — strict type discipline.
-- **`smoke-test.sh` (46 checks)** is the contract between backend and frontend — runs in CI before every merge.
+- **`smoke-test.sh` (35 checks)** is the contract between backend and frontend — runs in CI before every merge.
