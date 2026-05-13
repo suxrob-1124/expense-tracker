@@ -19,6 +19,22 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+/**
+ * Central Spring Security configuration for the Expense Tracker API.
+ *
+ * <p>Applies a stateless JWT-based filter chain with the following characteristics:
+ * <ul>
+ *   <li>CSRF disabled (stateless REST API, no session cookies for CSRF surface).</li>
+ *   <li>CORS configured via {@link CorsConfig#corsConfigurationSource()}.</li>
+ *   <li>Session creation policy: {@code STATELESS}.</li>
+ *   <li>Public endpoints: {@code /api/v1/auth/**}, {@code /api/v1/users/register},
+ *       {@code /actuator/health}, {@code /v3/api-docs/**}, {@code /swagger-ui/**}.</li>
+ *   <li>Method-level security enabled via {@code @PreAuthorize} annotations.</li>
+ * </ul>
+ *
+ * <p>Filter order: {@link RateLimitFilter} → {@link JwtAuthenticationFilter}
+ * → {@code UsernamePasswordAuthenticationFilter}.
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
@@ -42,6 +58,13 @@ public class SecurityConfig {
         this.corsConfigurationSource = corsConfigurationSource;
     }
 
+    /**
+     * Configures and builds the primary security filter chain.
+     *
+     * @param http the Spring Security {@link HttpSecurity} builder
+     * @return the configured {@link SecurityFilterChain}
+     * @throws Exception if the filter chain cannot be built
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -70,11 +93,24 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Provides a BCrypt {@link PasswordEncoder} at strength 12.
+     *
+     * @return a BCrypt password encoder instance
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
     }
 
+    /**
+     * Exposes the {@link AuthenticationManager} from the auto-configured
+     * {@link AuthenticationConfiguration} as a Spring bean.
+     *
+     * @param config the Spring-managed authentication configuration
+     * @return the application-wide {@link AuthenticationManager}
+     * @throws Exception if the manager cannot be resolved
+     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
