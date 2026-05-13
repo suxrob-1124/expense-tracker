@@ -20,7 +20,7 @@ const fmt = (value: string) =>
  * Values are formatted as RUB currency with `Intl.NumberFormat` (`ru-RU`).
  */
 export function TransactionsKpi({ income, expense, balance }: TransactionsKpiProps) {
-  const isNegativeBalance = balance.startsWith('-')
+  const isNegativeBalance = Number(balance) < 0
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -52,6 +52,12 @@ docker compose logs -f backend    # логи бэкенда
 docker compose logs -f frontend   # логи фронтенда
 ```
 
+Если `8080` уже занят локальным backend-процессом, можно поднять контейнеры на другом порту:
+
+```bash
+BACKEND_PORT=8081 docker compose up -d --build
+```
+
 ## Структура
 
 ```
