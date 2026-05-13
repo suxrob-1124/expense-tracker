@@ -27,6 +27,22 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Service responsible for JWT issuance, rotation and revocation.
+ *
+ * <p>Handles the full authentication lifecycle:
+ * <ul>
+ *   <li>Credential validation via Spring Security's {@code AuthenticationManager}.</li>
+ *   <li>Access and refresh token generation via {@link com.company.expensetracker.security.JwtTokenProvider}.</li>
+ *   <li>Refresh token rotation: old JTI blacklisted before new tokens are issued.</li>
+ *   <li>Publishing {@link com.company.expensetracker.event.UserLoggedInEvent} and
+ *       {@link com.company.expensetracker.event.UserLoginFailedEvent} for audit and
+ *       brute-force protection listeners.</li>
+ * </ul>
+ *
+ * <p>All methods are {@code @Transactional}; read-only operations use
+ * {@code @Transactional(readOnly = true)}.
+ */
 @Service
 @Transactional
 public class AuthService {
@@ -49,6 +65,18 @@ public class AuthService {
         this.tokenBlacklistService = tokenBlacklistService;
     }
 
+    /**
+     * Authenticates the user and issues a fresh access + refresh token pair.
+     *
+     * <p>Publishes {@link com.company.expensetracker.event.UserLoggedInEvent} on success
+     * and {@link com.company.expensetracker.event.UserLoginFailedEvent} on failure.
+     *
+     * @param request     the login credentials (email + password)
+     * @param httpRequest the HTTP request used to extract the client IP address for auditing
+     * @return a {@link LoginTokens} record containing both tokens and their TTLs
+     * @throws org.springframework.web.server.ResponseStatusException {@code 401} for invalid credentials,
+     *         {@code 423} when the account is locked
+     */
     @Transactional(readOnly = true)
     public LoginTokens login(LoginRequest request, HttpServletRequest httpRequest) {
         String emailHash = emailHasher.hash(request.email());
@@ -79,6 +107,17 @@ public class AuthService {
         }
     }
 
+    /**
+     * Validates the refresh token, revokes its JTI, and issues a new token pair.
+     *
+     * <p>Token rotation: the incoming JTI is blacklisted before new tokens are generated,
+     * preventing reuse.
+     *
+     * @param refreshToken the raw refresh JWT read from the HttpOnly cookie
+     * @return a new {@link LoginTokens} record
+     * @throws org.springframework.web.server.ResponseStatusException {@code 401} if the token is
+     *         null/blank, expired, of the wrong type, or already revoked
+     */
     public LoginTokens refresh(String refreshToken) {
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token missing");
@@ -121,6 +160,14 @@ public class AuthService {
         }
     }
 
+    /**
+     * Revokes the given refresh token by blacklisting its JTI.
+     *
+     * <p>Silently ignores null/blank tokens and expired or otherwise invalid JWTs —
+     * the logout flow should always succeed from the client's perspective.
+     *
+     * @param refreshToken the raw refresh JWT, may be {@code null} or blank
+     */
     public void revokeRefreshToken(String refreshToken) {
         if (refreshToken == null || refreshToken.isBlank()) return;
         try {

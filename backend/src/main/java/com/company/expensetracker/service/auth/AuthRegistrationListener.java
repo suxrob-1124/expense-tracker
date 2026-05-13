@@ -15,6 +15,14 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.Map;
 
+/**
+ * Spring event listener that persists a {@code USER_REGISTERED} audit record
+ * after the user registration transaction commits.
+ *
+ * <p>Uses {@code @TransactionalEventListener(AFTER_COMMIT)} so the audit entry
+ * is only written after the outer transaction succeeds. Runs in a new
+ * {@code REQUIRES_NEW} transaction to avoid contaminating the caller.
+ */
 @Component
 public class AuthRegistrationListener {
 
@@ -28,6 +36,12 @@ public class AuthRegistrationListener {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Handles a {@link com.company.expensetracker.event.UserRegisteredEvent} by saving
+     * a {@code USER_REGISTERED} {@link com.company.expensetracker.domain.AuditEvent}.
+     *
+     * @param event the registration event containing userId, emailHash and timestamp
+     */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onUserRegistered(UserRegisteredEvent event) {
