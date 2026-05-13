@@ -1,7 +1,12 @@
 import Link from 'next/link'
 import { backendFetch } from '@/shared/api/http'
 import { API } from '@/shared/api/endpoints'
-import type { TransactionResponse, CategoryResponse, TransactionSummaryResponse } from '@/shared/api/dto'
+import type {
+  TransactionResponse,
+  CategoryResponse,
+  TransactionSummaryResponse,
+  PaymentMethodResponse,
+} from '@/shared/api/dto'
 import { Amount } from '@/entities/transaction'
 import { formatDate, formatMonthYear } from '@/shared/lib/formatDate'
 import { TransactionsKpi } from '@/widgets/transactions-kpi'
@@ -28,10 +33,11 @@ interface TransactionsViewProps {
  * transaction list. Shows a prompt to create a category when none exist.
  */
 export async function TransactionsView({ month, year }: TransactionsViewProps) {
-  const [txRes, catRes, sumRes] = await Promise.all([
+  const [txRes, catRes, sumRes, pmRes] = await Promise.all([
     backendFetch(API.transactions.list(month, year), { forwardAccessToken: true }),
     backendFetch(API.categories.base, { forwardAccessToken: true }),
     backendFetch(API.transactions.summary(month, year), { forwardAccessToken: true }),
+    backendFetch(API.paymentMethods.base, { forwardAccessToken: true }),
   ])
 
   const transactions: TransactionResponse[] = txRes.ok ? await txRes.json() : []
@@ -39,6 +45,7 @@ export async function TransactionsView({ month, year }: TransactionsViewProps) {
   const summary: TransactionSummaryResponse = sumRes.ok
     ? await sumRes.json()
     : { income: '0.0000', expense: '0.0000', balance: '0.0000' }
+  const paymentMethods: PaymentMethodResponse[] = pmRes.ok ? await pmRes.json() : []
 
   const noCategories = categories.length === 0
 
@@ -49,7 +56,11 @@ export async function TransactionsView({ month, year }: TransactionsViewProps) {
           <h1 className="text-2xl font-bold">Транзакции</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{formatMonthYear(month, year)}</p>
         </div>
-        <NewTransactionButton categories={categories} disabled={noCategories} />
+        <NewTransactionButton
+          categories={categories}
+          paymentMethods={paymentMethods}
+          disabled={noCategories}
+        />
       </div>
 
       <TransactionsKpi income={summary.income} expense={summary.expense} balance={summary.balance} />

@@ -32,6 +32,13 @@ export const API = {
     /** `GET`, `PUT`, or `DELETE` a specific category by UUID. */
     byId: (id: string) => `/api/v1/categories/${id}`,
   },
+  /** Payment method CRUD endpoints (all require authentication). */
+  paymentMethods: {
+    /** `GET` all or `POST` a new payment method. */
+    base: '/api/v1/payment-methods',
+    /** `GET`, `PATCH` or `DELETE` a specific payment method by UUID. */
+    byId: (id: string) => `/api/v1/payment-methods/${id}`,
+  },
   transactions: {
     /** Base path for the transactions resource: `POST /api/v1/transactions` */
     base: '/api/v1/transactions',

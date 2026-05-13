@@ -32,6 +32,11 @@ public record TransactionRequest(
         @NotNull Instant date,
 
         @Schema(description = "UUID of the category that owns this transaction", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6", requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotNull UUID categoryId
+        @NotNull UUID categoryId,
+
+        @Schema(description = "Optional UUID of the payment method used (ownership is verified). Null clears the link.",
+                example = "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+        UUID paymentMethodId
 
 ) {}

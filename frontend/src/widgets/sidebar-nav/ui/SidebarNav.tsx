@@ -4,11 +4,12 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/shared/lib/cn'
 import { logoutAction } from '@/features/auth/logout'
-import { Wallet, ArrowLeftRight, Folder, User, LogOut } from 'lucide-react'
+import { Wallet, ArrowLeftRight, Folder, CreditCard, User, LogOut } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/transactions', label: 'Транзакции', Icon: ArrowLeftRight },
   { href: '/categories', label: 'Категории', Icon: Folder },
+  { href: '/payment-methods', label: 'Методы оплаты', Icon: CreditCard },
   { href: '/profile', label: 'Профиль', Icon: User },
 ]
 

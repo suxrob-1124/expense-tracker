@@ -107,6 +107,64 @@ export type PagedResponse<T> = {
 }
 
 /**
+ * Discriminated union for payment method type.
+ * Mirrors `com.company.expensetracker.domain.PaymentMethodType`.
+ */
+export type PaymentMethodType = 'CARD' | 'CASH' | 'BANK'
+
+/**
+ * Payload for creating a payment method.
+ * Mirrors `com.company.expensetracker.dto.paymentmethod.PaymentMethodRequest`.
+ */
+export interface PaymentMethodRequest {
+  /** Display name (1–64 chars, unique per user, case-insensitive). */
+  name: string
+  /** Payment method type. Example: `"CARD"` */
+  type: PaymentMethodType
+  /** Optional last four digits (4 numeric chars). Example: `"1234"` */
+  last4?: string | null
+  /** Optional initial balance — decimal string scale 4. Example: `"1000.0000"` */
+  balance?: string | null
+}
+
+/**
+ * Partial-update payload for a payment method (PATCH semantics).
+ * Mirrors `com.company.expensetracker.dto.paymentmethod.PaymentMethodPatchRequest`.
+ *
+ * Every field is optional; null fields are ignored by the backend.
+ * Use {@link archived} to toggle archive state — there is no dedicated archive endpoint.
+ */
+export interface PaymentMethodPatchRequest {
+  name?: string | null
+  type?: PaymentMethodType | null
+  last4?: string | null
+  balance?: string | null
+  archived?: boolean | null
+}
+
+/**
+ * Payment method returned by the API.
+ * Mirrors `com.company.expensetracker.dto.paymentmethod.PaymentMethodResponse`.
+ */
+export interface PaymentMethodResponse {
+  /** UUID of the payment method. Example: `"3fa85f64-5717-4562-b3fc-2c963f66afa6"` */
+  id: string
+  /** Display name. Example: `"Visa Gold"` */
+  name: string
+  type: PaymentMethodType
+  /** Last four digits or null. Example: `"1234"` */
+  last4: string | null
+  /** Current balance as decimal string scale 4, or null. Example: `"1000.0000"` */
+  balance: string | null
+  /** Archive flag — archived methods are hidden from default lists. */
+  archived: boolean
+  /** ISO-8601 UTC instant. */
+  createdAt: string
+  /** ISO-8601 UTC instant. */
+  updatedAt: string
+}
+
+/**
  * Discriminated union for transaction direction.
  * Mirrors `com.company.expensetracker.domain.TransactionType`.
  */
@@ -128,6 +186,8 @@ export interface TransactionRequest {
   date: string
   /** UUID of the owning category */
   categoryId: string
+  /** Optional UUID of the payment method used (ownership is verified by the backend). */
+  paymentMethodId?: string | null
 }
 
 /**
@@ -147,6 +207,8 @@ export interface TransactionResponse {
   date: string
   /** UUID of the associated category */
   categoryId: string
+  /** UUID of the linked payment method, or null if none. */
+  paymentMethodId: string | null
   /** ISO-8601 UTC instant */
   createdAt: string
   /** ISO-8601 UTC instant */

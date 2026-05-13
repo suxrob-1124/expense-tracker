@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <changeSet id="20260513-007-create-table" author="system">
+        <createTable tableName="payment_methods">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last4" type="VARCHAR(4)"/>
+            <column name="balance" type="DECIMAL(19,4)"/>
+            <column name="archived" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_by" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <rollback>
+            <dropTable tableName="payment_methods"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260513-007-add-fk-user" author="system">
+        <addForeignKeyConstraint
+                baseTableName="payment_methods"
+                baseColumnNames="user_id"
+                constraintName="fk_payment_methods_user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="payment_methods" constraintName="fk_payment_methods_user_id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260513-007-add-index-user-id" author="system">
+        <createIndex indexName="idx_payment_methods_user_id" tableName="payment_methods">
+            <column name="user_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex indexName="idx_payment_methods_user_id" tableName="payment_methods"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260513-007-add-unique-index-user-name" author="system">
+        <sql>
+            CREATE UNIQUE INDEX idx_payment_methods_user_name_lower ON payment_methods (user_id, LOWER(name));
+        </sql>
+
+        <rollback>
+            <sql>DROP INDEX IF EXISTS idx_payment_methods_user_name_lower;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

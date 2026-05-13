@@ -18,6 +18,15 @@ export const transactionSchema = z.object({
   description: z.string().max(255, 'Описание не более 255 символов').optional().nullable(),
   date: z.string().datetime({ error: 'Введите корректную дату' }),
   categoryId: z.string().uuid('Выберите категорию'),
+  paymentMethodId: z
+    .union([z.string().uuid('Некорректный метод оплаты'), z.literal(''), z.literal('__none__')])
+    .optional()
+    .transform((v) => (v === '' || v === '__none__' || v == null ? undefined : v)),
 })
 
-export type TransactionFormValues = z.infer<typeof transactionSchema>
+/**
+ * Input type (pre-transform) — used for `useForm<TransactionFormValues>`.
+ * `z.input` gives the shape react-hook-form manages; Server Actions re-parse to get the
+ * transformed output (e.g. `paymentMethodId` normalised to `undefined` when empty).
+ */
+export type TransactionFormValues = z.input<typeof transactionSchema>

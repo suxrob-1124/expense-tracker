@@ -14,16 +14,20 @@ PostgreSQL 16. Schema is managed exclusively by Liquibase — Hibernate runs wit
                  │        users          │
                  │  id (PK, UUID)        │
                  │  email_hash (UQ)      │
-                 └──┬───────────┬────────┘
-        FK CASCADE  │           │  FK CASCADE
-                    │           │
-        ┌───────────▼──┐     ┌──▼─────────────────────┐
-        │ categories   │     │     transactions       │
-        │ id (PK)      │     │  id (PK)               │
-        │ user_id (FK) │◄────┤  category_id (FK)      │
-        │ UQ (user_id, │     │  user_id (FK)          │
-        │   LOWER(name))│    │                        │
-        └──────────────┘     └────────────────────────┘
+                 └──┬─────────┬──────────┘
+        FK CASCADE  │         │  FK CASCADE
+                    │         │
+        ┌───────────▼──┐   ┌──▼────────────────────────────────┐
+        │ categories   │   │          transactions              │
+        │ id (PK)      │   │  id (PK)                          │
+        │ user_id (FK) │◄──┤  category_id (FK, CASCADE)        │
+        │ UQ (user_id, │   │  payment_method_id (FK, SET NULL) ├──►┌──────────────────────┐
+        │   LOWER(name))│  │  user_id (FK)                     │   │   payment_methods    │
+        └──────────────┘   └───────────────────────────────────┘   │  id (PK)             │
+                                                                    │  user_id (FK)        │
+                                                                    │  UQ (user_id,        │
+                                                                    │    LOWER(name))      │
+                                                                    └──────────────────────┘
 
    ┌─────────────────┐        ┌──────────────────────┐
    │  audit_events   │        │  revoked_token_jtis  │
@@ -83,7 +87,7 @@ User-owned expense/income categories.
 
 ---
 
-## `transactions` *(changeset `20260507-004`)*
+## `transactions` *(changeset `20260507-004`, extended `20260513-008`)*
 
 Financial transactions belonging to a user, classified by category.
 
@@ -95,6 +99,7 @@ Financial transactions belonging to a user, classified by category.
 | `description` | `VARCHAR(255)` | nullable | Free-form note. |
 | `date` | `TIMESTAMP WITH TIME ZONE` | NOT NULL | The instant the transaction occurred (user-supplied, UTC). Used for month bucketing and ordering. |
 | `category_id` | `UUID` | NOT NULL, FK → `categories(id)` `ON DELETE CASCADE` | Classification. Must be owned by the same user as the transaction. |
+| `payment_method_id` | `UUID` | nullable, FK → `payment_methods(id)` `ON DELETE SET NULL` | Optional link to the payment method used. Set to `NULL` automatically when the method is deleted — transactions are never lost. |
 | `user_id` | `UUID` | NOT NULL, FK → `users(id)` `ON DELETE CASCADE` | Owner. |
 | `version`, audit columns | — | NOT NULL | Optimistic lock + auditing. |
 
@@ -103,6 +108,28 @@ Financial transactions belonging to a user, classified by category.
 - `idx_transactions_category_id` on `category_id` — required for FK + delete cascade.
 - `idx_transactions_date` on `date` — monthly range scans.
 - `idx_transactions_user_date` on `(user_id, date DESC)` — composite, powers `/transactions/latest` (paginated, newest first).
+- `idx_transactions_payment_method_id` on `payment_method_id` — FK index, speeds up SET NULL cascade on payment method delete.
+
+---
+
+## `payment_methods` *(changeset `20260513-007`)*
+
+User-owned payment methods (cards, cash, bank accounts). Name must be unique per user (case-insensitive).
+
+| Column | Type | Constraints | Purpose |
+|---|---|---|---|
+| `id` | `UUID` | PK | Primary identifier |
+| `name` | `VARCHAR(64)` | NOT NULL | Display name. Must be unique per user (case-insensitive — see `idx_payment_methods_user_name_lower`). |
+| `type` | `VARCHAR(16)` | NOT NULL | Enum: `CARD` \| `CASH` \| `BANK`. |
+| `last4` | `VARCHAR(4)` | nullable | Last four digits of the card or account number. Meaningful only for `CARD` and `BANK`. Validated as `/^\d{4}$/` in the backend. |
+| `balance` | `DECIMAL(19,4)` | nullable | Manually maintained balance (scale 4). Not auto-updated by transactions — free-form tracking only. |
+| `archived` | `BOOLEAN` | NOT NULL, default `false` | Soft-hide flag. Archived methods are excluded from form selects but kept to preserve transaction history. |
+| `user_id` | `UUID` | NOT NULL, FK → `users(id)` `ON DELETE CASCADE` | Owner. |
+| `version`, audit columns | — | NOT NULL | Optimistic lock + auditing. |
+
+**Indexes**:
+- `idx_payment_methods_user_id` on `user_id` — fast ownership scans.
+- `idx_payment_methods_user_name_lower` (UNIQUE, raw SQL) on `(user_id, LOWER(name))` — case-insensitive name uniqueness per user.
 
 ---
 
@@ -148,6 +175,8 @@ JWT revocation list. Looked up on every `/auth/refresh` and `/auth/logout` call.
 | `20260507-004` | Create `transactions` table + FKs + indexes |
 | `20260507-005` | Create `revoked_token_jtis` table + `expires_at` index |
 | `20260513-006` | Add `version` column to `revoked_token_jtis` |
+| `20260513-007` | Create `payment_methods` table + FK to `users` + uniqueness on `(user_id, LOWER(name))` |
+| `20260513-008` | Add nullable `payment_method_id` column to `transactions` + FK (`ON DELETE SET NULL`) + index |
 
 ---
 

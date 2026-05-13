@@ -421,6 +421,126 @@ LATEST_BAD_PAGE=$(http_code GET "/api/v1/transactions/latest?page=-1" \
 [ "$LATEST_BAD_PAGE" = "400" ] && pass "GET /transactions/latest?page=-1 → 400 Bad Request" \
                                 || fail "GET /transactions/latest?page=-1 → $LATEST_BAD_PAGE (expected 400)"
 
+# ── Payment Methods CRUD ─────────────────────────────────────────────────────
+
+# Fresh category for tests that link a transaction to a payment method
+PM_CAT_FULL=$(curl -si -X POST "$BASE_URL/api/v1/categories" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"name":"PmTestCategory","color":"#998877","icon":"💳"}')
+PM_CAT_LOCATION=$(echo "$PM_CAT_FULL" | grep -i "^location:" | tr -d '\r' | awk '{print $2}')
+PM_CATEGORY_ID=$(echo "$PM_CAT_LOCATION" | grep -oE '[0-9a-f-]{36}$')
+
+info "36. POST /payment-methods → 201 + Location"
+PM_CREATE_FULL=$(curl -si -X POST "$BASE_URL/api/v1/payment-methods" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"name":"Visa Gold","type":"CARD","last4":"1234","balance":"1000.0000"}')
+PM_CREATE_STATUS=$(echo "$PM_CREATE_FULL" | head -1 | grep -oE '[0-9]{3}' | head -1)
+[ "$PM_CREATE_STATUS" = "201" ] && pass "POST /payment-methods → 201 Created" \
+                                 || fail "POST /payment-methods → $PM_CREATE_STATUS (expected 201)"
+PM_LOCATION=$(echo "$PM_CREATE_FULL" | grep -i "^location:" | tr -d '\r' | awk '{print $2}')
+PM_ID=$(echo "$PM_LOCATION" | grep -oE '[0-9a-f-]{36}$')
+[ -n "$PM_ID" ] && pass "POST /payment-methods → Location header present" \
+                || fail "POST /payment-methods → Location header missing"
+
+info "37. GET /payment-methods → list contains created method"
+PM_LIST=$(http_body GET /api/v1/payment-methods \
+  -H "Authorization: Bearer $ACCESS_TOKEN")
+echo "$PM_LIST" | grep -q '"Visa Gold"' \
+  && pass "GET /payment-methods → contains 'Visa Gold'" \
+  || fail "GET /payment-methods → 'Visa Gold' not found in list"
+
+info "38. POST /payment-methods duplicate name → 409"
+PM_DUP_CODE=$(http_code POST /api/v1/payment-methods \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"name":"Visa Gold","type":"CARD"}')
+[ "$PM_DUP_CODE" = "409" ] && pass "Duplicate payment method name → 409 Conflict" \
+                            || fail "Duplicate payment method name → $PM_DUP_CODE (expected 409)"
+
+info "39. POST /payment-methods invalid last4 → 400"
+PM_BAD_CODE=$(http_code POST /api/v1/payment-methods \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"name":"Bad","type":"CARD","last4":"abcd"}')
+[ "$PM_BAD_CODE" = "400" ] && pass "Invalid last4 → 400 Bad Request" \
+                            || fail "Invalid last4 → $PM_BAD_CODE (expected 400)"
+
+info "40. PATCH /payment-methods/{id} archive=true → 200 + archived flag set"
+if [ -n "$PM_ID" ]; then
+  PM_PATCH_BODY=$(http_body PATCH "/api/v1/payment-methods/$PM_ID" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -d '{"archived":true}')
+  echo "$PM_PATCH_BODY" | grep -q '"archived":true' \
+    && pass "PATCH archive=true → archived flag set" \
+    || fail "PATCH archive=true → archived flag not set in response"
+else
+  fail "PATCH archive → skipped (no payment method id)"
+fi
+
+info "41. GET /payment-methods/{id} with other user's token → 404 (ownership)"
+if [ -n "$PM_ID" ] && [ -n "$ACCESS_TOKEN2" ]; then
+  PM_OWN_CODE=$(http_code GET "/api/v1/payment-methods/$PM_ID" \
+    -H "Authorization: Bearer $ACCESS_TOKEN2")
+  [ "$PM_OWN_CODE" = "404" ] && pass "GET /payment-methods/{id} other user → 404 Not Found" \
+                              || fail "GET /payment-methods/{id} other user → $PM_OWN_CODE (expected 404)"
+else
+  fail "PM ownership check → skipped (missing id or token)"
+fi
+
+info "42. POST /transactions with other user's paymentMethodId → 404"
+if [ -n "$PM_ID" ] && [ -n "$CAT2_ID" ] && [ -n "$ACCESS_TOKEN2" ]; then
+  TX_FOREIGN_PM_CODE=$(http_code POST /api/v1/transactions \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $ACCESS_TOKEN2" \
+    -d "{\"amount\":5.00,\"type\":\"EXPENSE\",\"date\":\"$TX_DATE\",\"categoryId\":\"$CAT2_ID\",\"paymentMethodId\":\"$PM_ID\"}")
+  [ "$TX_FOREIGN_PM_CODE" = "404" ] && pass "POST /transactions with foreign paymentMethodId → 404 Not Found" \
+                                     || fail "POST /transactions with foreign paymentMethodId → $TX_FOREIGN_PM_CODE (expected 404)"
+else
+  fail "Cross-user payment method check → skipped (missing prerequisites)"
+fi
+
+info "43. POST /transactions with own paymentMethodId → 201"
+if [ -n "$PM_ID" ] && [ -n "$PM_CATEGORY_ID" ]; then
+  TX_WITH_PM_FULL=$(curl -si -X POST "$BASE_URL/api/v1/transactions" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -d "{\"amount\":42.00,\"type\":\"EXPENSE\",\"date\":\"$TX_DATE\",\"categoryId\":\"$PM_CATEGORY_ID\",\"paymentMethodId\":\"$PM_ID\"}")
+  TX_WITH_PM_STATUS=$(echo "$TX_WITH_PM_FULL" | head -1 | grep -oE '[0-9]{3}' | head -1)
+  [ "$TX_WITH_PM_STATUS" = "201" ] && pass "POST /transactions with own paymentMethodId → 201 Created" \
+                                    || fail "POST /transactions with own paymentMethodId → $TX_WITH_PM_STATUS (expected 201)"
+  TX_WITH_PM_LOCATION=$(echo "$TX_WITH_PM_FULL" | grep -i "^location:" | tr -d '\r' | awk '{print $2}')
+  TX_WITH_PM_ID=$(echo "$TX_WITH_PM_LOCATION" | grep -oE '[0-9a-f-]{36}$')
+else
+  fail "POST /transactions linked → skipped (missing prerequisites)"
+fi
+
+info "44. DELETE /payment-methods/{id} → 204"
+if [ -n "$PM_ID" ]; then
+  PM_DEL_CODE=$(http_code DELETE "/api/v1/payment-methods/$PM_ID" \
+    -H "Authorization: Bearer $ACCESS_TOKEN")
+  [ "$PM_DEL_CODE" = "204" ] && pass "DELETE /payment-methods/{id} → 204 No Content" \
+                              || fail "DELETE /payment-methods/{id} → $PM_DEL_CODE (expected 204)"
+fi
+
+info "45. After PM delete: linked transaction survives with paymentMethodId=null (SET NULL)"
+if [ -n "$TX_WITH_PM_ID" ]; then
+  TX_AFTER_PM_DEL=$(http_body GET "/api/v1/transactions/$TX_WITH_PM_ID" \
+    -H "Authorization: Bearer $ACCESS_TOKEN")
+  echo "$TX_AFTER_PM_DEL" | grep -q '"paymentMethodId":null' \
+    && pass "Linked transaction survived with paymentMethodId=null" \
+    || fail "Linked transaction: paymentMethodId not null after PM delete → $TX_AFTER_PM_DEL"
+else
+  fail "SET NULL check → skipped (no linked tx id)"
+fi
+
+info "46. GET /payment-methods without token → 401"
+PM_NO_AUTH=$(http_code GET /api/v1/payment-methods)
+[ "$PM_NO_AUTH" = "401" ] && pass "GET /payment-methods (no token) → 401 Unauthorized" \
+                           || fail "GET /payment-methods (no token) → $PM_NO_AUTH (expected 401)"
+
 # ── summary ──────────────────────────────────────────────────────────────────
 echo ""
 echo "======================================"
