@@ -10,10 +10,23 @@ import { NewTransactionButton } from './NewTransactionButton'
 import { Card, CardContent } from '@/shared/ui/card'
 
 interface TransactionsViewProps {
+  /** 1-based month number (1–12) */
   month: number
+  /** Calendar year */
   year: number
 }
 
+/**
+ * Server Component — main view for the `/transactions` page.
+ *
+ * Fetches three endpoints in parallel:
+ * 1. `GET /api/v1/transactions?month=&year=` — transaction list
+ * 2. `GET /api/v1/categories` — category list (for name resolution and the form)
+ * 3. `GET /api/v1/transactions/summary?month=&year=` — monthly KPI totals
+ *
+ * Renders a header, {@link TransactionsKpi}, {@link MonthSwitcher}, and the
+ * transaction list. Shows a prompt to create a category when none exist.
+ */
 export async function TransactionsView({ month, year }: TransactionsViewProps) {
   const [txRes, catRes, sumRes] = await Promise.all([
     backendFetch(API.transactions.list(month, year), { forwardAccessToken: true }),

@@ -18,11 +18,25 @@ import { createTransactionAction, updateTransactionAction } from '../api/transac
 import type { TransactionResponse, CategoryResponse } from '@/shared/api/dto'
 
 interface TransactionFormProps {
+  /** Available categories to populate the category selector */
   categories: CategoryResponse[]
+  /**
+   * When provided the form operates in edit mode: fields are pre-filled and
+   * submission calls {@link updateTransactionAction} instead of {@link createTransactionAction}.
+   */
   initialValues?: TransactionResponse
+  /** Called after a successful create or update */
   onSuccess?: () => void
 }
 
+/**
+ * Controlled form for creating or editing a transaction.
+ *
+ * Uses `react-hook-form` with a zod resolver ({@link transactionSchema}).
+ * Submits via Server Actions; shows toast notifications on success/failure.
+ *
+ * Render in a Client Component (`"use client"`) context.
+ */
 export function TransactionForm({ categories, initialValues, onSuccess }: TransactionFormProps) {
   const isEdit = !!initialValues
 

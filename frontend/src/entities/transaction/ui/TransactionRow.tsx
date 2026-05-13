@@ -3,9 +3,16 @@ import { formatDate } from '@/shared/lib/formatDate'
 import type { TransactionResponse } from '@/shared/api/dto'
 
 interface TransactionRowProps {
+  /** Full transaction object to render */
   transaction: TransactionResponse
 }
 
+/**
+ * Renders a single transaction as a list item (`<li>`).
+ *
+ * Displays the optional description, formatted date, and a coloured {@link Amount}.
+ * Intended for use inside a `<ul>` with `divide-y` styling.
+ */
 export function TransactionRow({ transaction }: TransactionRowProps) {
   return (
     <li className="flex items-center justify-between px-4 py-3">

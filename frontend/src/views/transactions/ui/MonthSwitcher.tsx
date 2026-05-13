@@ -3,7 +3,9 @@
 import { useRouter } from 'next/navigation'
 
 interface MonthSwitcherProps {
+  /** Current 1-based month (1–12) */
   month: number
+  /** Current calendar year */
   year: number
 }
 
@@ -12,6 +14,12 @@ const MONTH_NAMES = [
   'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
 ]
 
+/**
+ * Client Component — previous/next navigation for the monthly transaction view.
+ *
+ * Pushes a new route to `/transactions?month=M&year=Y` on each click,
+ * triggering a Server Component re-fetch in {@link TransactionsView}.
+ */
 export function MonthSwitcher({ month, year }: MonthSwitcherProps) {
   const router = useRouter()
 
