@@ -21,7 +21,7 @@ public record PaymentMethodRequest(
         @Schema(description = "Payment method display name (1–64 chars, unique per user, case-insensitive).",
                 example = "Visa Gold",
                 requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotBlank @Size(min = 1, max = 64) String name,
+        @NotBlank @Size(max = 64) String name,
 
         @Schema(description = "Payment method type. One of: CARD, CASH, BANK.",
                 example = "CARD",

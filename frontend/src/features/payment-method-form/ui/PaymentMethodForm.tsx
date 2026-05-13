@@ -121,7 +121,7 @@ export function PaymentMethodForm() {
                 <FormLabel>Баланс</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="1000.00"
+                    placeholder="1000.0000"
                     inputMode="decimal"
                     {...field}
                     value={field.value ?? ''}

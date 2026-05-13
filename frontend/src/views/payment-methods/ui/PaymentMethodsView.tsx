@@ -1,20 +1,16 @@
 import { backendFetch } from '@/shared/api/http'
 import { API } from '@/shared/api/endpoints'
-import { PaymentMethodCard, type PaymentMethodResponse } from '@/entities/payment-method'
-import {
-  PaymentMethodForm,
-  deletePaymentMethodAction,
-  toggleArchivePaymentMethodAction,
-} from '@/features/payment-method-form'
+import type { PaymentMethodResponse } from '@/entities/payment-method'
+import { PaymentMethodForm } from '@/features/payment-method-form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
+import { PaymentMethodsList } from './PaymentMethodsList'
 
 /**
  * Server Component that renders the payment methods management page.
  *
- * Fetches the user's payment methods via `GET /api/v1/payment-methods` server-side.
- * Renders a grid of {@link PaymentMethodCard} components (with archive/delete
- * actions) and the {@link PaymentMethodForm} below. Empty state suggests
- * creating the first method.
+ * Fetches the user's payment methods via `GET /api/v1/payment-methods` server-side
+ * and hands them to {@link PaymentMethodsList}, which filters archived items in the
+ * client. Renders the {@link PaymentMethodForm} below for adding new methods.
  */
 export async function PaymentMethodsView() {
   const res = await backendFetch(API.paymentMethods.base, { forwardAccessToken: true })
@@ -29,22 +25,7 @@ export async function PaymentMethodsView() {
         </p>
       </div>
 
-      {paymentMethods.length === 0 ? (
-        <p className="text-muted-foreground text-center py-8">
-          Методов оплаты пока нет — создайте первый ниже
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {paymentMethods.map((pm) => (
-            <PaymentMethodCard
-              key={pm.id}
-              paymentMethod={pm}
-              onDelete={deletePaymentMethodAction}
-              onToggleArchive={toggleArchivePaymentMethodAction}
-            />
-          ))}
-        </div>
-      )}
+      <PaymentMethodsList paymentMethods={paymentMethods} />
 
       <Card>
         <CardHeader>

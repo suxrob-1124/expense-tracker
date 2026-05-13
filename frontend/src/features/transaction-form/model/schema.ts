@@ -1,6 +1,13 @@
 import { z } from 'zod'
 
 /**
+ * Sentinel `<Select>` value used by the transaction form to represent
+ * "no payment method linked". The Server Action strips it to `undefined`
+ * before sending the payload to the backend.
+ */
+export const NO_PAYMENT_METHOD = '__none__'
+
+/**
  * Zod validation schema for the transaction form.
  *
  * - `amount`: decimal string matching `/^\d+(\.\d{1,2})?$/` (e.g. `"100"` or `"99.50"`), must be > 0
@@ -19,9 +26,13 @@ export const transactionSchema = z.object({
   date: z.string().datetime({ error: 'Введите корректную дату' }),
   categoryId: z.string().uuid('Выберите категорию'),
   paymentMethodId: z
-    .union([z.string().uuid('Некорректный метод оплаты'), z.literal(''), z.literal('__none__')])
+    .union([
+      z.string().uuid('Некорректный метод оплаты'),
+      z.literal(''),
+      z.literal(NO_PAYMENT_METHOD),
+    ])
     .optional()
-    .transform((v) => (v === '' || v === '__none__' || v == null ? undefined : v)),
+    .transform((v) => (v === '' || v === NO_PAYMENT_METHOD || v == null ? undefined : v)),
 })
 
 /**

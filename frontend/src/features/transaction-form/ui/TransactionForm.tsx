@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/shared/ui/select'
 import Link from 'next/link'
-import { transactionSchema, type TransactionFormValues } from '../model/schema'
+import { transactionSchema, NO_PAYMENT_METHOD, type TransactionFormValues } from '../model/schema'
 import { createTransactionAction, updateTransactionAction } from '../api/transaction.action'
 import type { TransactionResponse, CategoryResponse, PaymentMethodResponse } from '@/shared/api/dto'
 import { PaymentMethodIcon } from '@/shared/ui/payment-method-icon'
@@ -174,7 +174,7 @@ export function TransactionForm({
               <FormItem>
                 <FormLabel>Метод оплаты</FormLabel>
                 <Select
-                  value={field.value && field.value !== '' ? field.value : '__none__'}
+                  value={field.value && field.value !== '' ? field.value : NO_PAYMENT_METHOD}
                   onValueChange={field.onChange}
                 >
                   <FormControl>
@@ -183,7 +183,7 @@ export function TransactionForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="__none__">— без метода —</SelectItem>
+                    <SelectItem value={NO_PAYMENT_METHOD}>— без метода —</SelectItem>
                     {paymentMethods
                       .filter((pm) => !pm.archived)
                       .map((pm) => (

@@ -134,10 +134,11 @@ public class PaymentMethodController {
             @ApiResponse(responseCode = "409", description = "New name conflicts with an existing payment method"),
     })
     @PatchMapping("/{id}")
-    public ResponseEntity<PaymentMethodResponse> update(@AuthenticationPrincipal UserPrincipal principal,
+    public ResponseEntity<PaymentMethodResponse> update(
+            @AuthenticationPrincipal UserPrincipal principal,
             @Parameter(description = "Payment method UUID", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
             @PathVariable UUID id,
-                                                        @Valid @RequestBody PaymentMethodPatchRequest request) {
+            @Valid @RequestBody PaymentMethodPatchRequest request) {
         return ResponseEntity.ok(paymentMethodCommandService.update(id, principal.userId(), request));
     }
 

@@ -324,6 +324,8 @@ Partially update a transaction. Only non-null fields are applied.
 { "amount": "49.99", "description": "Lunch (corrected)" }
 ```
 
+> **Note**: `paymentMethodId: null` does **not** clear the link — null fields are ignored by the partial-update mapper. To unlink, delete the payment method itself; the FK (`ON DELETE SET NULL`) will null out the column.
+
 ### `DELETE /transactions/{id}`
 Delete a transaction.
 

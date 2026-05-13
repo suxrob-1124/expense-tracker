@@ -3,6 +3,7 @@
 import { toast } from 'sonner'
 import { Trash2, Archive, ArchiveRestore } from 'lucide-react'
 import { PaymentMethodIcon } from '@/shared/ui/payment-method-icon'
+import { formatMoney } from '@/shared/lib/formatMoney'
 import type { PaymentMethodResponse } from '../model/types'
 
 /** Props for the {@link PaymentMethodCard} component. */
@@ -67,7 +68,7 @@ export function PaymentMethodCard({
 
       {paymentMethod.balance != null && (
         <div className="text-sm font-mono text-right">
-          {paymentMethod.balance}
+          {formatMoney(paymentMethod.balance)}
         </div>
       )}
 
