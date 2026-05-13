@@ -40,3 +40,10 @@ IMPORTANT: Use Conventional Commits: `<type>(<scope>): <subject>`
 - No `any` in TypeScript. No raw `Object` in Java.
 - Do NOT infer implementation phase from this file — check `git log`.
 - `.gitkeep`: keep in empty dirs; remove immediately when code is added.
+
+## Documentation — write it alongside the code (NOT later)
+- **Language**: ALL documentation (JavaDoc, TSDoc, OpenAPI `description`/`summary`) MUST be written in **English** — even when chatting with the user in Russian.
+- **Backend**: every NEW or MODIFIED public method in `controller/`, `service/`, `repository/`, mapper, or DTO MUST ship with JavaDoc. Controllers MUST carry SpringDoc annotations (`@Tag`, `@Operation`, `@ApiResponses`, `@Parameter`, `@SecurityRequirement`); DTOs MUST carry `@Schema` on class and every field. Details: `backend/CLAUDE.md` → *Documentation Rules*.
+- **Frontend**: every public export from a slice (`index.ts`) MUST carry TSDoc — Server Actions, components props, schemas, shared DTOs, endpoint helpers. Details: `frontend/CLAUDE.md` → *Documentation Rules*.
+- **Reference implementation**: the `transactions` module (PR #3) is the canonical example for both layers — mimic its structure and tone.
+- **Verification**: Swagger UI at `/swagger-ui/index.html` MUST render the new endpoints with descriptions, examples, and response codes before merge.
