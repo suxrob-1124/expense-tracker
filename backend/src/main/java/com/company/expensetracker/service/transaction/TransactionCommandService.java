@@ -5,6 +5,7 @@ import com.company.expensetracker.dto.transaction.TransactionPatchRequest;
 import com.company.expensetracker.dto.transaction.TransactionRequest;
 import com.company.expensetracker.dto.transaction.TransactionResponse;
 import com.company.expensetracker.repository.CategoryRepository;
+import com.company.expensetracker.repository.PaymentMethodRepository;
 import com.company.expensetracker.repository.TransactionRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,13 +29,16 @@ public class TransactionCommandService {
 
     private final TransactionRepository transactionRepository;
     private final CategoryRepository categoryRepository;
+    private final PaymentMethodRepository paymentMethodRepository;
     private final TransactionMapper transactionMapper;
 
     public TransactionCommandService(TransactionRepository transactionRepository,
                                      CategoryRepository categoryRepository,
+                                     PaymentMethodRepository paymentMethodRepository,
                                      TransactionMapper transactionMapper) {
         this.transactionRepository = transactionRepository;
         this.categoryRepository = categoryRepository;
+        this.paymentMethodRepository = paymentMethodRepository;
         this.transactionMapper = transactionMapper;
     }
 
@@ -53,12 +57,18 @@ public class TransactionCommandService {
         categoryRepository.findByIdAndUserId(request.categoryId(), userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
 
+        if (request.paymentMethodId() != null) {
+            paymentMethodRepository.findByIdAndUserId(request.paymentMethodId(), userId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment method not found"));
+        }
+
         Transaction transaction = new Transaction(
                 request.amount(),
                 request.type(),
                 request.description(),
                 request.date(),
                 request.categoryId(),
+                request.paymentMethodId(),
                 userId
         );
 
@@ -86,6 +96,12 @@ public class TransactionCommandService {
         if (request.categoryId() != null && !request.categoryId().equals(transaction.getCategoryId())) {
             categoryRepository.findByIdAndUserId(request.categoryId(), userId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
+        }
+
+        if (request.paymentMethodId() != null
+                && !request.paymentMethodId().equals(transaction.getPaymentMethodId())) {
+            paymentMethodRepository.findByIdAndUserId(request.paymentMethodId(), userId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment method not found"));
         }
 
         transactionMapper.patchEntity(transaction, request);

@@ -32,6 +32,14 @@ public record TransactionPatchRequest(
         Instant date,
 
         @Schema(description = "UUID of the new category (ownership is verified)", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
-        UUID categoryId
+        UUID categoryId,
+
+        @Schema(description = "UUID of the payment method to link (ownership is verified). " +
+                "Null leaves the current link unchanged — there is no way to clear the link via PATCH because " +
+                "MapStruct uses NullValuePropertyMappingStrategy.IGNORE. To remove the link, delete the payment " +
+                "method itself; the FK is ON DELETE SET NULL and will null out this field automatically.",
+                example = "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+        UUID paymentMethodId
 
 ) {}

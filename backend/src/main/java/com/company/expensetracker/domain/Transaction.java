@@ -34,18 +34,22 @@ public class Transaction extends BaseEntity {
     @Column(name = "category_id", nullable = false)
     private UUID categoryId;
 
+    @Column(name = "payment_method_id")
+    private UUID paymentMethodId;
+
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
     protected Transaction() {}
 
     public Transaction(BigDecimal amount, TransactionType type, String description,
-                       Instant date, UUID categoryId, UUID userId) {
+                       Instant date, UUID categoryId, UUID paymentMethodId, UUID userId) {
         this.amount = amount;
         this.type = type;
         this.description = description;
         this.date = date;
         this.categoryId = categoryId;
+        this.paymentMethodId = paymentMethodId;
         this.userId = userId;
     }
 
@@ -56,6 +60,7 @@ public class Transaction extends BaseEntity {
     public String getDescription() { return description; }
     public Instant getDate() { return date; }
     public UUID getCategoryId() { return categoryId; }
+    public UUID getPaymentMethodId() { return paymentMethodId; }
     public UUID getUserId() { return userId; }
 
     public void setAmount(BigDecimal amount) { this.amount = amount; }
@@ -63,4 +68,5 @@ public class Transaction extends BaseEntity {
     public void setDescription(String description) { this.description = description; }
     public void setDate(Instant date) { this.date = date; }
     public void setCategoryId(UUID categoryId) { this.categoryId = categoryId; }
+    public void setPaymentMethodId(UUID paymentMethodId) { this.paymentMethodId = paymentMethodId; }
 }

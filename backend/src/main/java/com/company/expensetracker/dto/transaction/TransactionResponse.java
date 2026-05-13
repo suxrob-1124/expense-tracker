@@ -34,6 +34,11 @@ public record TransactionResponse(
         @Schema(description = "UUID of the associated category", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
         UUID categoryId,
 
+        @Schema(description = "UUID of the linked payment method, or null if none",
+                example = "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+        UUID paymentMethodId,
+
         @Schema(description = "Record creation timestamp (UTC ISO-8601)", example = "2026-05-13T10:00:00Z")
         Instant createdAt,
 

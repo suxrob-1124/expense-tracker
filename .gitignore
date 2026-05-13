@@ -25,5 +25,5 @@ build/
 secrets/
 backend/src/main/resources/application-local.yml
 
-# Claude Code internal
-.claude/
+# Claude Code internal — settings only, docs/memory/plans are version-controlled
+.claude/settings.local.json

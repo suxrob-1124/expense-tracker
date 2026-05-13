@@ -4,11 +4,13 @@ import { useState } from 'react'
 import { TransactionForm } from '@/features/transaction-form'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
-import type { CategoryResponse } from '@/shared/api/dto'
+import type { CategoryResponse, PaymentMethodResponse } from '@/shared/api/dto'
 
 interface NewTransactionButtonProps {
   /** Category list passed down from the parent Server Component for the inline form */
   categories: CategoryResponse[]
+  /** Payment methods passed down from the parent Server Component. Optional. */
+  paymentMethods?: PaymentMethodResponse[]
   /** Disables the button when no categories exist — a transaction requires a category */
   disabled?: boolean
 }
@@ -19,7 +21,11 @@ interface NewTransactionButtonProps {
  * Renders a button when collapsed; expands to an inline {@link TransactionForm}
  * card on click. Collapses again after a successful submission or cancellation.
  */
-export function NewTransactionButton({ categories, disabled }: NewTransactionButtonProps) {
+export function NewTransactionButton({
+  categories,
+  paymentMethods,
+  disabled,
+}: NewTransactionButtonProps) {
   const [open, setOpen] = useState(false)
 
   if (!open) {
@@ -38,6 +44,7 @@ export function NewTransactionButton({ categories, disabled }: NewTransactionBut
       <CardContent>
         <TransactionForm
           categories={categories}
+          paymentMethods={paymentMethods}
           onSuccess={() => setOpen(false)}
         />
         <Button
