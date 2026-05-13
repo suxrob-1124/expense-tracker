@@ -5,11 +5,25 @@ import { ICON_MAP } from '../model/icons'
 import type { CategoryResponse } from '../model/types'
 import { Trash2 } from 'lucide-react'
 
+/** Props for the {@link CategoryCard} component. */
 interface CategoryCardProps {
+  /** The category data to display. */
   category: CategoryResponse
+  /**
+   * Called when the user confirms deletion.
+   * @param id - UUID of the category to delete.
+   * @returns An object with an optional `error` message on failure.
+   */
   onDelete: (id: string) => Promise<{ error?: string }>
 }
 
+/**
+ * Client Component that renders a single category card.
+ *
+ * Displays the category icon (from {@link ICON_MAP}) tinted with the category color,
+ * the category name, and a delete button that appears on hover.
+ * Prompts for confirmation before calling {@link onDelete}.
+ */
 export function CategoryCard({ category, onDelete }: CategoryCardProps) {
   const Icon = ICON_MAP[category.icon]
 

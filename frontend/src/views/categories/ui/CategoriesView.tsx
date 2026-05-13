@@ -5,6 +5,13 @@ import { CategoryCard } from '@/entities/category'
 import { CategoryCreateForm, deleteCategoryAction } from '@/features/category-form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 
+/**
+ * Server Component that renders the categories management page.
+ *
+ * Fetches all user categories via `GET /api/v1/categories` server-side.
+ * Renders a grid of {@link CategoryCard} components (or an empty-state message)
+ * and the {@link CategoryCreateForm} below.
+ */
 export async function CategoriesView() {
   const res = await backendFetch(API.categories.base, { forwardAccessToken: true })
   const categories: CategoryResponse[] = res.ok ? await res.json() : []

@@ -5,6 +5,15 @@ import { backendFetch } from '@/shared/api/http'
 import { API } from '@/shared/api/endpoints'
 import { categorySchema, type CategoryFormData } from '../model/schema'
 
+/**
+ * Server Action — creates a new category for the authenticated user.
+ *
+ * Validates the payload against {@link categorySchema}, then calls
+ * `POST /api/v1/categories`. Revalidates `/categories` on success.
+ *
+ * @param data - Validated category form data (name, color, icon).
+ * @returns `{}` on success or `{ error: string }` on validation/server error.
+ */
 export async function createCategoryAction(data: CategoryFormData): Promise<{ error?: string }> {
   const parsed = categorySchema.safeParse(data)
   if (!parsed.success) {

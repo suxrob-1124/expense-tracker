@@ -17,6 +17,12 @@ import { CATEGORY_ICONS, ICON_MAP } from '@/entities/category'
 import { categorySchema, type CategoryFormData } from '../model/schema'
 import { createCategoryAction } from '../api/create-category.action'
 
+/**
+ * Client Component that renders the category creation form (name, icon picker, color picker).
+ *
+ * On submit, calls {@link createCategoryAction}. Success shows a toast and resets
+ * the name field while preserving the selected color and icon.
+ */
 export function CategoryCreateForm() {
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),

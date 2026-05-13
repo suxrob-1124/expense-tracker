@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
+/** All valid category icon identifiers supported by the application. */
 export const CATEGORY_ICONS: string[] = [
   'Utensils',
   'Car',
@@ -29,6 +30,7 @@ export const CATEGORY_ICONS: string[] = [
   'Package',
 ]
 
+/** Map from a {@link CATEGORY_ICONS} identifier to the corresponding Lucide icon component. */
 export const ICON_MAP: Record<string, LucideIcon> = {
   Utensils,
   Car,
