@@ -12,10 +12,24 @@ const NAV_ITEMS = [
   { href: '/profile', label: 'Профиль', Icon: User },
 ]
 
+/** Props for the {@link SidebarNav} component. */
 interface SidebarNavProps {
-  user: { firstName: string; email: string }
+  /** Current user data displayed in the sidebar footer. */
+  user: {
+    /** First name used for the avatar initial and display name. */
+    firstName: string
+    /** Email address shown below the display name. */
+    email: string
+  }
 }
 
+/**
+ * Client Component that renders the main application navigation sidebar.
+ *
+ * Highlights the active route via `usePathname`. Shows navigation items for
+ * Transactions, Categories and Profile. Renders a user card with a logout button
+ * at the bottom (desktop only). Collapses to a horizontal top bar on mobile.
+ */
 export function SidebarNav({ user }: SidebarNavProps) {
   const pathname = usePathname()
 

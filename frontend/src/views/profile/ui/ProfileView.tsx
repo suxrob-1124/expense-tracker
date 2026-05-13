@@ -6,6 +6,12 @@ import { formatDate } from '@/shared/lib/formatDate'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Button } from '@/shared/ui/button'
 
+/**
+ * Server Component that renders the authenticated user's profile page.
+ *
+ * Fetches the current user via {@link API.users.me} server-side and displays
+ * name, email, role and creation date. Also renders a logout button.
+ */
 export async function ProfileView() {
   const res = await backendFetch(API.users.me, { forwardAccessToken: true })
   const user: UserResponse = await res.json()
