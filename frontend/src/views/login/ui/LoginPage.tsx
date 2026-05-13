@@ -2,6 +2,10 @@ import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
 import { LoginForm } from '@/features/auth/login-form'
 
+/**
+ * Server Component that renders the public login page.
+ * Composes the {@link LoginForm} inside a centered card layout.
+ */
 export function LoginPage() {
   return (
     <Card className="w-full max-w-md">

@@ -7,18 +7,29 @@
  * backendFetch(API.transactions.base, ...)
  */
 export const API = {
+  /** Authentication endpoints — login, token refresh and logout. */
   auth: {
+    /** `POST` — authenticate with email + password; sets a refreshToken cookie on success. */
     login: '/api/v1/auth/login',
+    /** `POST` — rotate the refresh token cookie and return a new access token. */
     refresh: '/api/v1/auth/refresh',
+    /** `POST` — revoke the refresh token and clear the cookie (requires Bearer token). */
     logout: '/api/v1/auth/logout',
   },
+  /** User registration and profile endpoints. */
   users: {
+    /** `POST` — create a new user account (publicly accessible). */
     register: '/api/v1/users/register',
+    /** `GET` — return the current authenticated user's profile. */
     me: '/api/v1/users/me',
+    /** `PATCH` — update the current user's password. */
     password: '/api/v1/users/me/password',
   },
+  /** Category CRUD endpoints (all require authentication). */
   categories: {
+    /** `GET` all or `POST` a new category. */
     base: '/api/v1/categories',
+    /** `GET`, `PUT`, or `DELETE` a specific category by UUID. */
     byId: (id: string) => `/api/v1/categories/${id}`,
   },
   transactions: {

@@ -8,8 +8,23 @@ import { API } from '@/shared/api/endpoints'
 import type { AuthResponse, LoginRequest } from '@/shared/api/dto'
 import { loginSchema } from '../model/schema'
 
+/**
+ * Discriminated union returned by {@link loginAction}.
+ * `{ ok: false }` carries a user-facing error message; `{ ok: true }` means
+ * the action redirected to `/transactions` (the branch is never reached by the caller).
+ */
 export type LoginActionResult = { ok: false; message: string } | { ok: true }
 
+/**
+ * Server Action — authenticates the user with email + password.
+ *
+ * Validates the payload against {@link loginSchema}, calls `POST /api/v1/auth/login`,
+ * stores tokens as HttpOnly cookies via {@link setAuthCookies}, then redirects to
+ * `/transactions` on success.
+ *
+ * @param raw - Raw form values; validated internally before the network call.
+ * @returns `{ ok: false, message }` on validation or server error; otherwise redirects.
+ */
 export async function loginAction(raw: LoginRequest): Promise<LoginActionResult> {
   const parsed = loginSchema.safeParse(raw)
   if (!parsed.success) {
@@ -39,6 +54,15 @@ export async function loginAction(raw: LoginRequest): Promise<LoginActionResult>
   redirect('/transactions')
 }
 
+/**
+ * Proxies the backend `Set-Cookie` refresh token header and sets the access token
+ * as an HttpOnly cookie in the Next.js cookie jar.
+ *
+ * Called from {@link loginAction} and `registerAction` after a successful auth response.
+ *
+ * @param res  - The raw `Response` from the backend (used to forward the `Set-Cookie` header).
+ * @param data - The parsed {@link AuthResponse} containing access-token details.
+ */
 export async function setAuthCookies(res: Response, data: AuthResponse) {
   const jar = await cookies()
 

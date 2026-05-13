@@ -9,8 +9,22 @@ import type { RegisterFormValues } from '../model/schema'
 import { registerSchema } from '../model/schema'
 import { setAuthCookies } from '@/features/auth/login-form'
 
+/**
+ * Discriminated union returned by {@link registerAction}.
+ * `{ ok: false }` carries a user-facing error message.
+ */
 export type RegisterActionResult = { ok: false; message: string } | { ok: true }
 
+/**
+ * Server Action — registers a new user and immediately logs them in.
+ *
+ * Validates the payload against {@link registerSchema}, strips `acceptTerms` before
+ * calling `POST /api/v1/users/register`, then auto-logs in via `POST /api/v1/auth/login`
+ * and redirects to `/transactions`.
+ *
+ * @param raw - Raw form values including `acceptTerms` (stripped before the API call).
+ * @returns `{ ok: false, message }` on error; otherwise redirects (branch unreachable).
+ */
 export async function registerAction(raw: RegisterFormValues): Promise<RegisterActionResult> {
   const parsed = registerSchema.safeParse(raw)
   if (!parsed.success) {

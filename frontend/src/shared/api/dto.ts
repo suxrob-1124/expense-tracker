@@ -1,49 +1,108 @@
-// Mirrors Java records 1:1
+/**
+ * Payload for {@link API.auth.login} (`POST /api/v1/auth/login`).
+ * Mirrors `com.company.expensetracker.dto.auth.LoginRequest`.
+ */
 export interface LoginRequest {
+  /** User's email address. Example: `"alice@example.com"` */
   email: string
+  /** User's plaintext password (sent over HTTPS only). */
   password: string
 }
 
+/**
+ * Payload for {@link API.users.register} (`POST /api/v1/users/register`).
+ * Mirrors `com.company.expensetracker.dto.user.RegisterRequest`.
+ *
+ * Password: min 12, max 128 characters.
+ * firstName / lastName: max 100 characters each.
+ */
 export interface RegisterRequest {
+  /** User's email address. Example: `"alice@example.com"` */
   email: string
-  password: string    // @Size(min=12, max=128)
-  firstName: string   // @Size(max=100)
-  lastName: string    // @Size(max=100)
-}
-
-export interface ChangePasswordRequest {
-  currentPassword: string
-  newPassword: string // @Size(min=12, max=128)
-}
-
-export interface UserResponse {
-  id: string          // UUID
-  email: string
+  /** Password (12–128 chars). Stored as BCrypt hash server-side. */
+  password: string
+  /** First name (max 100 chars). Example: `"Alice"` */
   firstName: string
+  /** Last name (max 100 chars). Example: `"Smith"` */
   lastName: string
-  role: string        // 'USER' | 'ADMIN'
-  createdAt: string   // Instant ISO-8601
 }
 
+/**
+ * Payload for `PATCH /api/v1/users/me/password`.
+ * Mirrors `com.company.expensetracker.dto.user.ChangePasswordRequest`.
+ */
+export interface ChangePasswordRequest {
+  /** The user's current password, required for verification. */
+  currentPassword: string
+  /** New password (12–128 chars). */
+  newPassword: string
+}
+
+/**
+ * User profile returned after registration or via `GET /api/v1/users/me`.
+ * Mirrors `com.company.expensetracker.dto.user.UserResponse`.
+ */
+export interface UserResponse {
+  /** UUID of the user. Example: `"3fa85f64-5717-4562-b3fc-2c963f66afa6"` */
+  id: string
+  /** User's email address (stored encrypted on the backend). */
+  email: string
+  /** First name (stored encrypted on the backend). */
+  firstName: string
+  /** Last name (stored encrypted on the backend). */
+  lastName: string
+  /** Assigned role. Example: `"USER"` */
+  role: string
+  /** Account creation timestamp — ISO-8601 UTC instant. Example: `"2026-05-13T10:00:00Z"` */
+  createdAt: string
+}
+
+/**
+ * Response body from {@link API.auth.login} and {@link API.auth.refresh}.
+ * Mirrors `com.company.expensetracker.dto.auth.AuthResponse`.
+ *
+ * The companion refresh token is delivered as an `HttpOnly` cookie and is absent here.
+ */
 export interface AuthResponse {
+  /** Short-lived JWT access token (Bearer, HS256). Example: `"eyJhbGciOiJIUzI1NiJ9..."` */
   accessToken: string
-  tokenType: string   // 'Bearer'
+  /** Token scheme — always `"Bearer"`. */
+  tokenType: string
+  /** Access token lifetime in seconds. Example: `900` */
   expiresInSeconds: number
 }
 
+/**
+ * Category as returned by the API.
+ * Mirrors `com.company.expensetracker.dto.category.CategoryResponse`.
+ */
 export interface CategoryResponse {
+  /** UUID of the category. Example: `"3fa85f64-5717-4562-b3fc-2c963f66afa6"` */
   id: string
+  /** Category display name. Example: `"Groceries"` */
   name: string
+  /** Color code associated with the category. Example: `"#4ade80"` */
   color: string
+  /** Icon identifier from the predefined icon set. Example: `"shopping-cart"` */
   icon: string
 }
 
+/**
+ * Generic paginated response wrapper.
+ * Mirrors `com.company.expensetracker.dto.common.PagedResponse<T>`.
+ */
 export type PagedResponse<T> = {
+  /** Page items. */
   content: T[]
+  /** Zero-based page index. */
   page: number
+  /** Number of items per page. */
   size: number
+  /** Total number of items across all pages. */
   totalElements: number
+  /** Total number of pages. */
   totalPages: number
+  /** Whether this is the last page. */
   last: boolean
 }
 

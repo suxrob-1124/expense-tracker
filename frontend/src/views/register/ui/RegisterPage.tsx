@@ -2,6 +2,10 @@ import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
 import { RegisterForm } from '@/features/auth/register-form'
 
+/**
+ * Server Component that renders the public registration page.
+ * Composes the {@link RegisterForm} inside a centered card layout.
+ */
 export function RegisterPage() {
   return (
     <Card className="w-full max-w-md">

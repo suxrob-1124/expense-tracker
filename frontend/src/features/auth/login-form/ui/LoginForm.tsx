@@ -9,6 +9,12 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { loginSchema, type LoginFormValues } from '../model/schema'
 import { loginAction } from '../api/login.action'
 
+/**
+ * Client Component that renders the email + password login form.
+ *
+ * On submit, calls {@link loginAction}. A successful login triggers a server-side
+ * redirect to `/transactions`. On failure, displays an error toast.
+ */
 export function LoginForm() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),

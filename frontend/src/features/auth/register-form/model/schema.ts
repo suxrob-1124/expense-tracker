@@ -1,5 +1,10 @@
 import { z } from 'zod'
 
+/**
+ * Zod schema for the registration form.
+ * Password: min 12, max 128 characters.
+ * `acceptTerms` must be `true`; it is stripped before sending to the backend.
+ */
 export const registerSchema = z.object({
   email: z.string().email('Введите корректный email'),
   password: z
@@ -13,4 +18,5 @@ export const registerSchema = z.object({
   }),
 })
 
+/** Inferred type of a valid registration form submission (includes `acceptTerms`). */
 export type RegisterFormValues = z.infer<typeof registerSchema>

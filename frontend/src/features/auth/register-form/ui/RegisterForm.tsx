@@ -10,6 +10,13 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { registerSchema, type RegisterFormValues } from '../model/schema'
 import { registerAction } from '../api/register.action'
 
+/**
+ * Client Component that renders the full registration form
+ * (firstName, lastName, email, password, acceptTerms checkbox).
+ *
+ * On submit, calls {@link registerAction}. A successful registration auto-logs
+ * the user in and redirects to `/transactions`. Errors are shown via toast.
+ */
 export function RegisterForm() {
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
