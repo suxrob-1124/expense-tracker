@@ -7,7 +7,7 @@ export const transactionSchema = z.object({
     .refine((v) => parseFloat(v) > 0, 'Сумма должна быть больше 0'),
   type: z.enum(['INCOME', 'EXPENSE']),
   description: z.string().max(255, 'Описание не более 255 символов').optional().nullable(),
-  date: z.string().datetime({ message: 'Введите корректную дату' }),
+  date: z.string().datetime({ error: 'Введите корректную дату' }),
   categoryId: z.string().uuid('Выберите категорию'),
 })
 

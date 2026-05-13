@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { backendFetch } from '@/shared/api/http'
 import { API } from '@/shared/api/endpoints'
-import type { TransactionResponse, CategoryResponse } from '@/shared/api/dto'
+import type { TransactionResponse, CategoryResponse, TransactionSummaryResponse } from '@/shared/api/dto'
 import { Amount } from '@/entities/transaction'
 import { formatDate, formatMonthYear } from '@/shared/lib/formatDate'
 import { TransactionsKpi } from '@/widgets/transactions-kpi'
@@ -15,20 +15,17 @@ interface TransactionsViewProps {
 }
 
 export async function TransactionsView({ month, year }: TransactionsViewProps) {
-  const [txRes, catRes] = await Promise.all([
+  const [txRes, catRes, sumRes] = await Promise.all([
     backendFetch(API.transactions.list(month, year), { forwardAccessToken: true }),
     backendFetch(API.categories.base, { forwardAccessToken: true }),
+    backendFetch(API.transactions.summary(month, year), { forwardAccessToken: true }),
   ])
 
   const transactions: TransactionResponse[] = txRes.ok ? await txRes.json() : []
   const categories: CategoryResponse[] = catRes.ok ? await catRes.json() : []
-
-  const income = transactions
-    .filter((t) => t.type === 'INCOME')
-    .reduce((s, t) => s + parseFloat(t.amount), 0)
-  const expense = transactions
-    .filter((t) => t.type === 'EXPENSE')
-    .reduce((s, t) => s + parseFloat(t.amount), 0)
+  const summary: TransactionSummaryResponse = sumRes.ok
+    ? await sumRes.json()
+    : { income: '0.0000', expense: '0.0000', balance: '0.0000' }
 
   const noCategories = categories.length === 0
 
@@ -42,7 +39,7 @@ export async function TransactionsView({ month, year }: TransactionsViewProps) {
         <NewTransactionButton categories={categories} disabled={noCategories} />
       </div>
 
-      <TransactionsKpi income={income} expense={expense} />
+      <TransactionsKpi income={summary.income} expense={summary.expense} balance={summary.balance} />
 
       <div className="flex items-center">
         <MonthSwitcher month={month} year={year} />

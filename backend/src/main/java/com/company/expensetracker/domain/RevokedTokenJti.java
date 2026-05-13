@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import java.time.Instant;
 
@@ -18,6 +19,10 @@ public class RevokedTokenJti {
     @Column(name = "expires_at", nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private Instant expiresAt;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
     protected RevokedTokenJti() {}
 
     public RevokedTokenJti(String jti, Instant expiresAt) {
@@ -27,4 +32,5 @@ public class RevokedTokenJti {
 
     public String getJti() { return jti; }
     public Instant getExpiresAt() { return expiresAt; }
+    public Long getVersion() { return version; }
 }

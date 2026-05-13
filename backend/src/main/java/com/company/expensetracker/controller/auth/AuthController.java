@@ -2,10 +2,8 @@ package com.company.expensetracker.controller.auth;
 
 import com.company.expensetracker.dto.auth.AuthResponse;
 import com.company.expensetracker.dto.auth.LoginRequest;
-import com.company.expensetracker.dto.user.UserResponse;
 import com.company.expensetracker.service.auth.AuthService;
 import com.company.expensetracker.service.auth.LoginTokens;
-import com.company.expensetracker.service.user.UserQueryService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,11 +18,9 @@ public class AuthController {
     private static final String REFRESH_COOKIE_NAME = "refreshToken";
 
     private final AuthService authService;
-    private final UserQueryService userQueryService;
 
-    public AuthController(AuthService authService, UserQueryService userQueryService) {
+    public AuthController(AuthService authService) {
         this.authService = authService;
-        this.userQueryService = userQueryService;
     }
 
     @PostMapping("/login")
@@ -34,8 +30,7 @@ public class AuthController {
             HttpServletResponse httpResponse) {
         LoginTokens tokens = authService.login(request, httpRequest);
         setRefreshCookie(httpResponse, tokens.refreshToken(), (int) tokens.refreshTtlSeconds());
-        UserResponse userResponse = userQueryService.findById(tokens.userId());
-        return ResponseEntity.ok(new AuthResponse(tokens.accessToken(), "Bearer", tokens.accessTtlSeconds(), userResponse));
+        return ResponseEntity.ok(new AuthResponse(tokens.accessToken(), "Bearer", tokens.accessTtlSeconds()));
     }
 
     @PostMapping("/refresh")
@@ -45,8 +40,7 @@ public class AuthController {
         String refreshToken = extractRefreshCookie(httpRequest);
         LoginTokens tokens = authService.refresh(refreshToken);
         setRefreshCookie(httpResponse, tokens.refreshToken(), (int) tokens.refreshTtlSeconds());
-        UserResponse userResponse = userQueryService.findById(tokens.userId());
-        return ResponseEntity.ok(new AuthResponse(tokens.accessToken(), "Bearer", tokens.accessTtlSeconds(), userResponse));
+        return ResponseEntity.ok(new AuthResponse(tokens.accessToken(), "Bearer", tokens.accessTtlSeconds()));
     }
 
     @PostMapping("/logout")

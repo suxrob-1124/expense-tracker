@@ -1,8 +1,11 @@
 package com.company.expensetracker.service.transaction;
 
+import com.company.expensetracker.domain.TransactionType;
 import com.company.expensetracker.dto.common.PagedResponse;
 import com.company.expensetracker.dto.transaction.TransactionResponse;
+import com.company.expensetracker.dto.transaction.TransactionSummaryResponse;
 import com.company.expensetracker.repository.TransactionRepository;
+import com.company.expensetracker.repository.TransactionTotalProjection;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -10,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
@@ -62,5 +67,23 @@ public class TransactionQueryService {
         return transactionRepository.findByIdAndUserId(id, userId)
                 .map(transactionMapper::toResponse)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found"));
+    }
+
+    public TransactionSummaryResponse summarize(UUID userId, Integer month, Integer year) {
+        YearMonth period = (month != null && year != null)
+                ? YearMonth.of(year, month)
+                : YearMonth.now(ZoneOffset.UTC);
+        Instant from = period.atDay(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant to = period.plusMonths(1).atDay(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+
+        BigDecimal income = BigDecimal.ZERO;
+        BigDecimal expense = BigDecimal.ZERO;
+        for (TransactionTotalProjection row : transactionRepository.sumByTypeForPeriod(userId, from, to)) {
+            if (row.getType() == TransactionType.INCOME) income = row.getTotal();
+            else if (row.getType() == TransactionType.EXPENSE) expense = row.getTotal();
+        }
+        income = income.setScale(4, RoundingMode.HALF_UP);
+        expense = expense.setScale(4, RoundingMode.HALF_UP);
+        return new TransactionSummaryResponse(income, expense, income.subtract(expense));
     }
 }

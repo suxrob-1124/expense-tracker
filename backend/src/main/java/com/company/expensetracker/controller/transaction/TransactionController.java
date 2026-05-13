@@ -4,6 +4,7 @@ import com.company.expensetracker.dto.common.PagedResponse;
 import com.company.expensetracker.dto.transaction.TransactionPatchRequest;
 import com.company.expensetracker.dto.transaction.TransactionRequest;
 import com.company.expensetracker.dto.transaction.TransactionResponse;
+import com.company.expensetracker.dto.transaction.TransactionSummaryResponse;
 import com.company.expensetracker.security.UserPrincipal;
 import com.company.expensetracker.service.transaction.TransactionCommandService;
 import com.company.expensetracker.service.transaction.TransactionQueryService;
@@ -52,6 +53,13 @@ public class TransactionController {
                                                             @RequestParam(required = false) Integer month,
                                                             @RequestParam(required = false) Integer year) {
         return ResponseEntity.ok(transactionQueryService.findAllForUser(principal.userId(), month, year));
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<TransactionSummaryResponse> summary(@AuthenticationPrincipal UserPrincipal principal,
+                                                              @RequestParam(required = false) Integer month,
+                                                              @RequestParam(required = false) Integer year) {
+        return ResponseEntity.ok(transactionQueryService.summarize(principal.userId(), month, year));
     }
 
     @GetMapping("/{id}")

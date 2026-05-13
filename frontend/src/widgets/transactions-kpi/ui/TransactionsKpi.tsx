@@ -2,15 +2,16 @@ import { ArrowUpRight, ArrowDownLeft, Scale } from 'lucide-react'
 import { Card, CardContent } from '@/shared/ui/card'
 
 interface TransactionsKpiProps {
-  income: number
-  expense: number
+  income: string
+  expense: string
+  balance: string
 }
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(n)
+const fmt = (value: string) =>
+  new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(Number(value))
 
-export function TransactionsKpi({ income, expense }: TransactionsKpiProps) {
-  const balance = income - expense
+export function TransactionsKpi({ income, expense, balance }: TransactionsKpiProps) {
+  const isNegativeBalance = balance.startsWith('-')
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -45,7 +46,7 @@ export function TransactionsKpi({ income, expense }: TransactionsKpiProps) {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Баланс</p>
-            <p className={`text-lg font-semibold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-lg font-semibold ${isNegativeBalance ? 'text-red-600' : 'text-green-600'}`}>
               {fmt(balance)}
             </p>
           </div>

@@ -19,6 +19,7 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@Transactional
 public class AuthService {
 
     private final AuthenticationManager authenticationManager;
@@ -47,6 +49,7 @@ public class AuthService {
         this.tokenBlacklistService = tokenBlacklistService;
     }
 
+    @Transactional(readOnly = true)
     public LoginTokens login(LoginRequest request, HttpServletRequest httpRequest) {
         String emailHash = emailHasher.hash(request.email());
         try {

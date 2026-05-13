@@ -29,7 +29,6 @@ export interface AuthResponse {
   accessToken: string
   tokenType: string   // 'Bearer'
   expiresInSeconds: number
-  user: UserResponse
 }
 
 export interface CategoryResponse {
@@ -67,4 +66,10 @@ export interface TransactionResponse {
   categoryId: string
   createdAt: string
   updatedAt: string
+}
+
+export interface TransactionSummaryResponse {
+  income: string
+  expense: string
+  balance: string
 }

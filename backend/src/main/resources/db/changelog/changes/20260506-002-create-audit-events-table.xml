@@ -31,6 +31,11 @@
         <createIndex indexName="idx_audit_events_occurred_at" tableName="audit_events">
             <column name="occurred_at"/>
         </createIndex>
+        <rollback>
+            <dropIndex tableName="audit_events" indexName="idx_audit_events_occurred_at"/>
+            <dropIndex tableName="audit_events" indexName="idx_audit_events_user_id"/>
+            <dropTable tableName="audit_events"/>
+        </rollback>
     </changeSet>
 
 </databaseChangeLog>

@@ -52,6 +52,10 @@
         <createIndex indexName="idx_users_email_hash" tableName="users" unique="true">
             <column name="email_hash"/>
         </createIndex>
+        <rollback>
+            <dropIndex tableName="users" indexName="idx_users_email_hash"/>
+            <dropTable tableName="users"/>
+        </rollback>
     </changeSet>
 
 </databaseChangeLog>

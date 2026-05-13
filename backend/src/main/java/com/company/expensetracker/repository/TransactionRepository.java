@@ -4,6 +4,8 @@ import com.company.expensetracker.domain.Transaction;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
 import java.util.List;
@@ -19,4 +21,15 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
 
     long countByCategoryIdAndUserId(UUID categoryId, UUID userId);
+
+    @Query("""
+           SELECT t.type AS type, COALESCE(SUM(t.amount), 0) AS total
+           FROM Transaction t
+           WHERE t.userId = :userId AND t.date >= :from AND t.date < :to
+           GROUP BY t.type
+           """)
+    List<TransactionTotalProjection> sumByTypeForPeriod(
+            @Param("userId") UUID userId,
+            @Param("from") Instant from,
+            @Param("to") Instant to);
 }
