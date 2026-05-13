@@ -18,6 +18,16 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Servlet filter that authenticates requests using a Bearer JWT in the {@code Authorization} header.
+ *
+ * <p>On each request, extracts the token, validates it via {@link JwtTokenProvider}, and — when
+ * the token is a valid access token — populates the {@link org.springframework.security.core.context.SecurityContext}
+ * with a {@link UserPrincipal}-based authentication. Invalid or missing tokens are silently ignored;
+ * unauthenticated requests to protected endpoints are rejected downstream by the security filter chain.
+ *
+ * <p>Extends {@link org.springframework.web.filter.OncePerRequestFilter} to ensure single execution per request.
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -27,6 +37,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
+    /**
+     * Extracts the Bearer token from {@code Authorization}, validates it, and populates the
+     * {@code SecurityContext}. Forwards the request to the next filter regardless of outcome.
+     *
+     * @param request     the incoming HTTP request
+     * @param response    the HTTP response
+     * @param filterChain the remaining filter chain
+     * @throws ServletException if a servlet error occurs
+     * @throws IOException      if an I/O error occurs
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,

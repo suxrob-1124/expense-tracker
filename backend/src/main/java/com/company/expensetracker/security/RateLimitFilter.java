@@ -15,6 +15,17 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.net.URI;
 
+/**
+ * Servlet filter that enforces per-IP rate limiting using Bucket4j.
+ *
+ * <p>Auth paths ({@code /api/v1/auth/**}) are limited to 10 requests per minute;
+ * all other paths to 60 requests per minute. Exceeding either limit returns
+ * {@code 429 Too Many Requests} with an RFC 7807 Problem Details body
+ * ({@code application/problem+json}).
+ *
+ * <p>The client IP is resolved from the {@code X-Forwarded-For} header (first value)
+ * when present, otherwise from the remote address.
+ */
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
 
@@ -26,6 +37,16 @@ public class RateLimitFilter extends OncePerRequestFilter {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Selects the appropriate Bucket4j bucket for the request's IP and path,
+     * then either forwards the request or returns a 429 response.
+     *
+     * @param request     the incoming HTTP request
+     * @param response    the HTTP response
+     * @param filterChain the remaining filter chain
+     * @throws ServletException if a servlet error occurs
+     * @throws IOException      if an I/O error occurs
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
