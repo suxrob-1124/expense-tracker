@@ -19,43 +19,7 @@ export JAVA_HOME="/opt/homebrew/opt/openjdk@21"
 - **Currency**: NEVER `float`/`double`. Use `BigDecimal` scale 4.
 - **Concurrency**: `@Version Long version` on ALL entities.
 - **Errors**: RFC 7807 Problem Details (`application/problem+json`) everywhere.
-- **Documentation**: every new/modified public element MUST carry JavaDoc + SpringDoc — see *Documentation Rules* below. NO EXCEPTIONS.
-
-## Documentation Rules — write it with the code (NOT later)
-
-**Language**: JavaDoc and OpenAPI text (`summary`, `description`, `@Schema` strings) MUST be in **English**. Always.
-
-### JavaDoc — required on every public element
-| Layer | Class JavaDoc | Method JavaDoc |
-|---|---|---|
-| `controller/` | purpose, base path, auth requirement | summary, `@param`, `@return`, `@throws ResponseStatusException` with status codes |
-| `service/*CommandService` | "Write-side CQRS service ...", `@Transactional`, `@PreAuthorize` | behaviour, ownership checks, `@param`, `@return`, `@throws` |
-| `service/*QueryService` | "Read-side CQRS service ...", `@Transactional(readOnly = true)` | behaviour, validation rules (e.g. `0 ≤ page`, `1 ≤ size ≤ 50`), `@param`, `@return`, `@throws` |
-| `service/*Mapper` | MapStruct intent + null policy | short line per `toResponse` / `toEntity` / `patchEntity` |
-| `repository/` | one-line intent | required for non-trivial methods (`@Query`, JPQL aggregations, native queries, count-for-precondition methods) |
-| `dto/` | record purpose | not required per accessor — covered by `@Schema` |
-
-Reference: `controller/transaction/TransactionController.java`, `service/transaction/TransactionCommandService.java`.
-
-### SpringDoc OpenAPI — required on controllers + DTOs
-- **Controller class**: `@Tag(name = "<Resource>", description = "...")` + `@SecurityRequirement(name = "bearerAuth")` (unless endpoint is public).
-- **Controller method**: `@Operation(summary, description)` + `@ApiResponses` with EVERY realistic status code (200/201/204/400/401/403/404/409) + `@Parameter(description, example)` on path/query params.
-- **DTO record**: `@Schema(description = "...")` on the class.
-- **DTO field**: `@Schema(description, example, requiredMode)` on EVERY component.
-  - `requiredMode = Schema.RequiredMode.REQUIRED` for `@NotNull` fields, `NOT_REQUIRED` for optional/patch fields.
-  - `BigDecimal` amounts: state scale (e.g. "scale 4") and give a realistic example (`"99.99"` / `"99.9900"`).
-  - `Instant`: state "UTC ISO-8601" and give an ISO example (`"2026-05-13T10:00:00Z"`).
-  - `UUID`: give a UUID example (`"3fa85f64-5717-4562-b3fc-2c963f66afa6"`).
-  - Enums: list the allowed values inline (e.g. "INCOME or EXPENSE").
-
-Reference: `dto/transaction/TransactionRequest.java`, `TransactionResponse.java`, `TransactionPatchRequest.java`, `TransactionSummaryResponse.java`.
-
-### Bearer-auth setup
-`OpenApiConfig` already declares the `bearerAuth` security scheme. New controllers only need `@SecurityRequirement(name = "bearerAuth")` at class level.
-
-### Verification before commit
-- `./gradlew build -x test` must pass.
-- `docker compose up -d --build` + open `http://localhost:8080/swagger-ui/index.html` — confirm the new tag appears with full descriptions, examples and response codes.
+- **Documentation**: every new/modified public element MUST carry JavaDoc + SpringDoc. Run `/docs-backend` for full rules and examples. NO EXCEPTIONS.
 
 ## Layer Rules
 - `Controller`: orchestration only, no business logic. Returns `ResponseEntity`.
@@ -104,14 +68,7 @@ Reference: `dto/transaction/TransactionRequest.java`, `TransactionResponse.java`
 
 ## Database (Liquibase)
 - IMPORTANT: Liquibase manages schema — **never `ddl-auto: create/update`** (only `validate`).
-- Changesets: `src/main/resources/db/changelog/changes/`, naming `YYYYMMDD-NNN-description.xml`.
-- Always include `<rollback>` blocks.
-- Existing changesets:
-  - `20260506-001` — users table
-  - `20260506-002` — audit_events table
-  - `20260506-003` — categories table
-  - `20260507-004` — transactions table
-  - `20260507-005` — revoked_token_jtis table
+- For any schema change run `/liquibase-changeset` for naming rules, rollback requirements, and existing changeset list.
 
 ## Environment
 Required in `backend/.env` and `application-local.yml`:

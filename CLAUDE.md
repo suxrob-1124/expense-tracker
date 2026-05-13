@@ -20,19 +20,9 @@ docker compose logs -f frontend
 Modules: DB, Security, User (CQRS), Auth, Category, Transaction — done.
 Frontend routes: `/` → `/transactions`, `/categories`, `/profile`.
 
-<when_committing>
-IMPORTANT: Use Conventional Commits: `<type>(<scope>): <subject>`
-- Types: `feat` | `fix` | `refactor` | `perf` | `test` | `docs` | `chore` | `style`
-- Scopes: `auth` | `user` | `category` | `transactions` | `frontend` | `db` | `security`
-- Subject ≤ 72 chars, imperative mood, no period at end
-- Pre-commit: `./gradlew build -x test` + `npm run build && npm run lint && npm run typecheck` + `./scripts/smoke-test.sh`
-</when_committing>
-
-<when_branching_or_opening_pr>
-- Branch from `main`. Naming: `feat/<slug>` | `fix/<slug>` | `refactor/<slug>` | `docs/<slug>` | `chore/<slug>`
-- PRs via squash merge only. No direct commits to `main`.
-- PR checklist: `./gradlew build -x test` ✓, `npm run build` ✓, `./scripts/smoke-test.sh` ✓, Liquibase `<rollback>` ✓
-</when_branching_or_opening_pr>
+<when_committing_or_branching_or_opening_pr>
+Run `/commit-and-pr` for commit format, branch naming, pre-commit checks, and PR checklist.
+</when_committing_or_branching_or_opening_pr>
 
 ## AI Rules
 - Never bypass security checks or use `--no-verify`. Fix root causes.
@@ -42,16 +32,10 @@ IMPORTANT: Use Conventional Commits: `<type>(<scope>): <subject>`
 - `.gitkeep`: keep in empty dirs; remove immediately when code is added.
 
 ## Documentation Maintenance — keep `.claude/docs/*` in sync
-- Before any non-trivial change, consult `.claude/docs/`: `architecture.md`, `api.md`, `database.md`, `dev-guide.md`.
-- When you change an endpoint, DTO, controller, or status code → update `.claude/docs/api.md`.
-- When you add/modify a Liquibase changeset, column, index, or FK → update `.claude/docs/database.md`.
-- When you add a module, layer, pattern, or cross-module dependency → update `.claude/docs/architecture.md`.
-- When you change the recipe for adding a module/feature/migration → update `.claude/docs/dev-guide.md`.
-- A PR that changes the schema or API but leaves these docs stale is incomplete — treat doc updates as part of the same commit.
+Run `/docs-sync` before committing any non-trivial change to check which `.claude/docs/*` files need updating.
 
 ## Documentation — write it alongside the code (NOT later)
 - **Language**: ALL documentation (JavaDoc, TSDoc, OpenAPI `description`/`summary`) MUST be written in **English** — even when chatting with the user in Russian.
-- **Backend**: every NEW or MODIFIED public method in `controller/`, `service/`, `repository/`, mapper, or DTO MUST ship with JavaDoc. Controllers MUST carry SpringDoc annotations (`@Tag`, `@Operation`, `@ApiResponses`, `@Parameter`, `@SecurityRequirement`); DTOs MUST carry `@Schema` on class and every field. Details: `backend/CLAUDE.md` → *Documentation Rules*.
-- **Frontend**: every public export from a slice (`index.ts`) MUST carry TSDoc — Server Actions, components props, schemas, shared DTOs, endpoint helpers. Details: `frontend/CLAUDE.md` → *Documentation Rules*.
+- **Backend**: run `/docs-backend` when creating/modifying controller, service, repository, mapper, or DTO.
+- **Frontend**: run `/docs-frontend` when creating/modifying a public export from any FSD slice.
 - **Reference implementation**: the `transactions` module (PR #3) is the canonical example for both layers — mimic its structure and tone.
-- **Verification**: Swagger UI at `/swagger-ui/index.html` MUST render the new endpoints with descriptions, examples, and response codes before merge.
