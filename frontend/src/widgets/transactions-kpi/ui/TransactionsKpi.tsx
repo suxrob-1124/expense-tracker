@@ -2,14 +2,23 @@ import { ArrowUpRight, ArrowDownLeft, Scale } from 'lucide-react'
 import { Card, CardContent } from '@/shared/ui/card'
 
 interface TransactionsKpiProps {
+  /** Total income for the period as a decimal string. Example: `"1500.0000"` */
   income: string
+  /** Total expenses for the period as a decimal string. Example: `"800.0000"` */
   expense: string
+  /** Net balance (income − expense) as a decimal string. Example: `"700.0000"` */
   balance: string
 }
 
 const fmt = (value: string) =>
   new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(Number(value))
 
+/**
+ * Displays three KPI cards: Income (green), Expenses (red), and Balance.
+ *
+ * Balance card colour adapts: red when negative, green otherwise.
+ * Values are formatted as RUB currency with `Intl.NumberFormat` (`ru-RU`).
+ */
 export function TransactionsKpi({ income, expense, balance }: TransactionsKpiProps) {
   const isNegativeBalance = balance.startsWith('-')
 

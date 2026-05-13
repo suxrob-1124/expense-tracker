@@ -1,5 +1,14 @@
 import { z } from 'zod'
 
+/**
+ * Zod validation schema for the transaction form.
+ *
+ * - `amount`: decimal string matching `/^\d+(\.\d{1,2})?$/` (e.g. `"100"` or `"99.50"`), must be > 0
+ * - `type`: one of `"INCOME"` | `"EXPENSE"`
+ * - `description`: optional string, max 255 characters
+ * - `date`: ISO-8601 datetime string (validated by zod's `datetime()`)
+ * - `categoryId`: UUID string
+ */
 export const transactionSchema = z.object({
   amount: z
     .string()

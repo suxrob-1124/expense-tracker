@@ -21,6 +21,13 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Read-side CQRS service for transactions.
+ *
+ * <p>Handles all read operations. Every method runs within a read-only
+ * transaction ({@code @Transactional(readOnly = true)}) and requires
+ * role {@code USER} ({@code @PreAuthorize}).
+ */
 @Service
 @Transactional(readOnly = true)
 @PreAuthorize("hasRole('USER')")
@@ -35,6 +42,17 @@ public class TransactionQueryService {
         this.transactionMapper = transactionMapper;
     }
 
+    /**
+     * Returns all transactions for the user in the specified month.
+     *
+     * <p>When both {@code month} and {@code year} are provided the query is
+     * scoped to that period; otherwise defaults to the current UTC month.
+     *
+     * @param userId UUID of the user
+     * @param month  month number 1–12 (optional)
+     * @param year   calendar year (optional; only applied together with {@code month})
+     * @return list of transactions sorted by date descending
+     */
     public List<TransactionResponse> findAllForUser(UUID userId, Integer month, Integer year) {
         YearMonth period = (month != null && year != null)
                 ? YearMonth.of(year, month)
@@ -49,6 +67,15 @@ public class TransactionQueryService {
                 .toList();
     }
 
+    /**
+     * Returns a page of the user's most recent transactions.
+     *
+     * @param userId UUID of the user
+     * @param page   zero-based page number (must be ≥ 0)
+     * @param size   page size (must be between 1 and 50)
+     * @return page of transactions sorted by date descending
+     * @throws IllegalArgumentException if {@code page < 0} or {@code size} is outside 1–50
+     */
     public PagedResponse<TransactionResponse> findLatest(UUID userId, int page, int size) {
         if (page < 0) {
             throw new IllegalArgumentException("Page index must not be less than zero");
@@ -63,12 +90,32 @@ public class TransactionQueryService {
         );
     }
 
+    /**
+     * Returns a single transaction by ID, enforcing ownership.
+     *
+     * @param id     UUID of the transaction
+     * @param userId UUID of the owning user
+     * @return the transaction
+     * @throws ResponseStatusException 404 if the transaction does not exist or belongs to another user
+     */
     public TransactionResponse findByIdForUser(UUID id, UUID userId) {
         return transactionRepository.findByIdAndUserId(id, userId)
                 .map(transactionMapper::toResponse)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found"));
     }
 
+    /**
+     * Computes income, expense, and balance totals for the specified month.
+     *
+     * <p>Delegates aggregation to the native JPQL query {@code sumByTypeForPeriod}
+     * which groups by {@link TransactionType}. All amounts are scaled to 4 decimal places.
+     * Defaults to the current UTC month when parameters are omitted.
+     *
+     * @param userId UUID of the user
+     * @param month  month number 1–12 (optional)
+     * @param year   calendar year (optional)
+     * @return summary with {@code income}, {@code expense}, and {@code balance} (scale 4)
+     */
     public TransactionSummaryResponse summarize(UUID userId, Integer month, Integer year) {
         YearMonth period = (month != null && year != null)
                 ? YearMonth.of(year, month)

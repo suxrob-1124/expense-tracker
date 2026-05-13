@@ -14,6 +14,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
+/**
+ * Write-side CQRS service for transactions.
+ *
+ * <p>Handles all mutating operations: create, update, and delete.
+ * Every method runs within a transaction ({@code @Transactional}) and
+ * requires role {@code USER} ({@code @PreAuthorize}).
+ */
 @Service
 @Transactional
 @PreAuthorize("hasRole('USER')")
@@ -31,6 +38,17 @@ public class TransactionCommandService {
         this.transactionMapper = transactionMapper;
     }
 
+    /**
+     * Creates a new transaction.
+     *
+     * <p>Verifies that the category identified by {@code request.categoryId()}
+     * belongs to {@code userId} before persisting.
+     *
+     * @param userId  UUID of the transaction owner
+     * @param request transaction payload
+     * @return the persisted transaction
+     * @throws ResponseStatusException 404 if the category is not found or belongs to another user
+     */
     public TransactionResponse create(UUID userId, TransactionRequest request) {
         categoryRepository.findByIdAndUserId(request.categoryId(), userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
@@ -47,6 +65,20 @@ public class TransactionCommandService {
         return transactionMapper.toResponse(transactionRepository.save(transaction));
     }
 
+    /**
+     * Partially updates a transaction.
+     *
+     * <p>Only non-null fields from {@code request} are applied to the entity via
+     * {@link TransactionMapper#patchEntity} ({@code NullValuePropertyMappingStrategy.IGNORE}).
+     * If {@code categoryId} changes, ownership of the new category is verified.
+     * Optimistic locking is enforced through {@code @Version} on the entity.
+     *
+     * @param id      UUID of the transaction to update
+     * @param userId  UUID of the transaction owner
+     * @param request fields to update; null fields are ignored
+     * @return the updated transaction
+     * @throws ResponseStatusException 404 if the transaction or the new category is not found or belongs to another user
+     */
     public TransactionResponse update(UUID id, UUID userId, TransactionPatchRequest request) {
         Transaction transaction = transactionRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found"));
@@ -61,6 +93,16 @@ public class TransactionCommandService {
         return transactionMapper.toResponse(transactionRepository.save(transaction));
     }
 
+    /**
+     * Deletes a transaction.
+     *
+     * <p>Verifies that the transaction identified by {@code id} belongs to {@code userId}
+     * before deletion.
+     *
+     * @param id     UUID of the transaction
+     * @param userId UUID of the owner
+     * @throws ResponseStatusException 404 if the transaction is not found or belongs to another user
+     */
     public void delete(UUID id, UUID userId) {
         Transaction transaction = transactionRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found"));
