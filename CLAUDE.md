@@ -41,6 +41,14 @@ IMPORTANT: Use Conventional Commits: `<type>(<scope>): <subject>`
 - Do NOT infer implementation phase from this file — check `git log`.
 - `.gitkeep`: keep in empty dirs; remove immediately when code is added.
 
+## Documentation Maintenance — keep `.claude/docs/*` in sync
+- Before any non-trivial change, consult `.claude/docs/`: `architecture.md`, `api.md`, `database.md`, `dev-guide.md`.
+- When you change an endpoint, DTO, controller, or status code → update `.claude/docs/api.md`.
+- When you add/modify a Liquibase changeset, column, index, or FK → update `.claude/docs/database.md`.
+- When you add a module, layer, pattern, or cross-module dependency → update `.claude/docs/architecture.md`.
+- When you change the recipe for adding a module/feature/migration → update `.claude/docs/dev-guide.md`.
+- A PR that changes the schema or API but leaves these docs stale is incomplete — treat doc updates as part of the same commit.
+
 ## Documentation — write it alongside the code (NOT later)
 - **Language**: ALL documentation (JavaDoc, TSDoc, OpenAPI `description`/`summary`) MUST be written in **English** — even when chatting with the user in Russian.
 - **Backend**: every NEW or MODIFIED public method in `controller/`, `service/`, `repository/`, mapper, or DTO MUST ship with JavaDoc. Controllers MUST carry SpringDoc annotations (`@Tag`, `@Operation`, `@ApiResponses`, `@Parameter`, `@SecurityRequirement`); DTOs MUST carry `@Schema` on class and every field. Details: `backend/CLAUDE.md` → *Documentation Rules*.
