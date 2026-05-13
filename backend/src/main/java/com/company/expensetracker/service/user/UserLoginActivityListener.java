@@ -13,6 +13,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
+/**
+ * Spring event listener that updates login-related state on the {@link com.company.expensetracker.domain.User} entity.
+ *
+ * <p>Handles:
+ * <ul>
+ *   <li>{@link com.company.expensetracker.event.UserLoggedInEvent} — resets failed-attempt counter and updates {@code lastLoginAt}.</li>
+ *   <li>{@link com.company.expensetracker.event.UserLoginFailedEvent} — increments {@code failedLoginAttempts} and locks
+ *       the account for {@value #LOCKOUT_MINUTES} minutes after {@value #LOCKOUT_THRESHOLD} consecutive failures.</li>
+ * </ul>
+ *
+ * <p>Both handlers are {@code @Async} to avoid blocking the authentication thread.
+ */
 @Component
 public class UserLoginActivityListener {
 
@@ -26,6 +38,11 @@ public class UserLoginActivityListener {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Resets the failed-login counter and records the login timestamp.
+     *
+     * @param event the login event carrying userId and timestamp
+     */
     @EventListener
     @Async
     @Transactional
@@ -36,6 +53,11 @@ public class UserLoginActivityListener {
         });
     }
 
+    /**
+     * Increments the failed-login counter and locks the account after the threshold is reached.
+     *
+     * @param event the failed-login event carrying the email hash and reason
+     */
     @EventListener
     @Async
     @Transactional

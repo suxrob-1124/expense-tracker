@@ -20,6 +20,15 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Write-side CQRS service for user account mutations.
+ *
+ * <p>All operations run in a {@code @Transactional} context.
+ * PII fields (email, firstName, lastName) are stored AES-256-GCM encrypted via
+ * {@link com.company.expensetracker.crypto.AesGcmStringConverter}. Email lookups
+ * always use the SHA-256 hash produced by {@link com.company.expensetracker.crypto.EmailHasher}.
+ * Passwords are hashed with BCrypt (strength 12).
+ */
 @Service
 @Transactional
 public class UserCommandService {
@@ -42,6 +51,16 @@ public class UserCommandService {
         this.userMapper = userMapper;
     }
 
+    /**
+     * Registers a new user account.
+     *
+     * <p>Verifies email uniqueness by hash before persisting. Publishes
+     * {@link com.company.expensetracker.event.UserRegisteredEvent} after the entity is saved.
+     *
+     * @param request registration payload (email, password, firstName, lastName)
+     * @return the persisted user as a {@link UserResponse}
+     * @throws org.springframework.web.server.ResponseStatusException {@code 409} if the email is already registered
+     */
     public UserResponse register(RegisterRequest request) {
         String emailHash = emailHasher.hash(request.email());
 
@@ -65,6 +84,17 @@ public class UserCommandService {
         return userMapper.toResponse(saved);
     }
 
+    /**
+     * Updates the user's password after verifying the current one.
+     *
+     * <p>Requires {@code ROLE_USER}. Publishes
+     * {@link com.company.expensetracker.event.PasswordChangedEvent} on success.
+     *
+     * @param userId  the authenticated user's UUID
+     * @param request contains currentPassword (for verification) and newPassword
+     * @throws org.springframework.web.server.ResponseStatusException {@code 404} if the user is not found,
+     *         {@code 400} if currentPassword does not match
+     */
     @PreAuthorize("hasRole('USER')")
     public void changePassword(UUID userId, ChangePasswordRequest request) {
         User user = userRepository.findById(userId)
