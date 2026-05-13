@@ -12,6 +12,14 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.net.URI;
 
+/**
+ * Spring Security {@link AccessDeniedHandler} that returns an RFC 7807 Problem Details
+ * response ({@code application/problem+json}) with HTTP 403 when an authenticated principal
+ * lacks the required authority for the requested resource.
+ *
+ * <p>Registered in {@link com.company.expensetracker.config.SecurityConfig} as the
+ * {@code accessDeniedHandler} for the security filter chain.
+ */
 @Component
 public class ApiAccessDeniedHandler implements AccessDeniedHandler {
 
@@ -21,6 +29,14 @@ public class ApiAccessDeniedHandler implements AccessDeniedHandler {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Writes a 403 Forbidden Problem Details body to the response.
+     *
+     * @param request                 the request that triggered the access-denied decision
+     * @param response                the response to write the 403 body into
+     * @param accessDeniedException   the Spring Security exception describing the denial
+     * @throws IOException if writing to the response stream fails
+     */
     @Override
     public void handle(HttpServletRequest request,
                        HttpServletResponse response,
